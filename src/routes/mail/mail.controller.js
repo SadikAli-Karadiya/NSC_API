@@ -44,14 +44,14 @@ async function httpPendingFees(req, res) {
   const students = data.students;
   try {
     students.map((student) => {
-      email = student.email;
-      full_name = student.full_name;
+      email = student.basic_info[0].email;
+      full_name = student.basic_info[0].full_name;
       PendingSender({ email, full_name });
     });
 
-    return res.status(200).json({ msg: "Your message sent successfully" });
+    return res.status(200).json({ success: true, msg: "Your message sent successfully" });
   } catch (error) {
-    return res.status(500).json(error.message);
+    return res.status(500).json({ success: false, msg: error.message});
   }
 }
 

@@ -5,8 +5,6 @@ const {startDatabase} = require('../src/database/databaseConn')
 portfinder.basePort = 4000;
 portfinder.highestPort = 9000;
 
-let runningPort;
-
 const http = require("http");
 const app = require("./app.js");
 
@@ -18,7 +16,6 @@ async function startServer() {
   portfinder.getPort((err, port) => {
       if (err) throw err;
       server.listen(port, () => {
-        runningPort = port
         console.log(`Server is Listening on port: ${port}`);
       });
     });

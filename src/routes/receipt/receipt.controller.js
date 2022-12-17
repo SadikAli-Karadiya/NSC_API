@@ -89,7 +89,7 @@ const generateReceiptFunction = async (
     { _id: academic_details.fees_id },
     { $inc: { pending_amount: -amount } }
   );
-  console.log(academic_details)
+  
     FeesSender({ 
       email : academic_details.student_id.contact_info_id.email, 
       full_name : academic_details.student_id.basic_info_id.full_name,
