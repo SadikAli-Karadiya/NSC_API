@@ -47,7 +47,7 @@ const generateReceiptFunction = async (
       select: "-_id student_id",
       populate: [
         { path: "basic_info_id", select: "full_name -_id" },
-        { path: "contact_info_id", select: "whatsapp_no address -_id" },
+        { path: "contact_info_id", select: "whatsapp_no address email -_id" },
       ],
     })
     .populate({
@@ -89,7 +89,8 @@ const generateReceiptFunction = async (
     { _id: academic_details.fees_id },
     { $inc: { pending_amount: -amount } }
   );
-    FeesSender = ({ 
+  console.log(academic_details)
+    FeesSender({ 
       email : academic_details.student_id.contact_info_id.email, 
       full_name : academic_details.student_id.basic_info_id.full_name,
       amount : net_amount, 
