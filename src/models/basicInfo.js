@@ -1,4 +1,3 @@
-require("../database/databaseConn");
 const mongoose = require("mongoose");
 
 const basicInfoSchema = new mongoose.Schema({

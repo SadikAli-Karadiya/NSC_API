@@ -1,4 +1,3 @@
-require("../database/databaseConn");
 const validator = require("validator");
 
 const mongoose = require("mongoose");

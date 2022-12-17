@@ -1,4 +1,3 @@
-require("../database/databaseConn");
 const bcrypt = require("bcrypt");
 
 const mongoose = require("mongoose");   

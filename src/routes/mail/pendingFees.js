@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const {USER, PASSWORD} = require('../../../constant')
 
 const Email = (options) => {
   let transpoter = nodemailer.createTransport({
@@ -6,8 +7,8 @@ const Email = (options) => {
     port: 465,
 
     auth: {
-      user: process.env.USER, // email
-      pass: process.env.PASSWORD, //password
+      user: USER, // email
+      pass: PASSWORD, //password
     },
   });
   transpoter.sendMail(options, (err, info) => {
@@ -19,14 +20,14 @@ const Email = (options) => {
 // send email
 const PendingSender = ({ email }) => {
   const options = {
-    from: `Nasir Sir Classes 👨‍🏫 <${process.env.USER}>`,
+    from: `Nasir Sir Classes 👨‍🏫 <${USER}>`,
     to: `${email}`,
     subject: "Pending Fees",
     html: `
         <div style="width: 100%; background-color: #f3f9ff; padding: 5rem 0">
         <div style="max-width: 700px; background-color: white; margin: 0 auto">
            <div style="width: 100%; background-color: #ADD8E6; padding: 20px 0">
-          <a href="${process.env.CLIENT_URL}" ><img
+          <a href="" ><img
               src="https://res.cloudinary.com/doagkfdns/image/upload/v1666102288/Nasir/logo_vhv2gr.png"
               style="width: 100%; height: 70px; object-fit: contain"
             /></a> 

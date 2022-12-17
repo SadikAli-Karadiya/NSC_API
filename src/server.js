@@ -1,16 +1,27 @@
 require("dotenv").config();
+const portfinder = require("portfinder");
+const {startDatabase} = require('../src/database/databaseConn')
 
-const PORT = process.env.PORT || 5000;
+portfinder.basePort = 4000;
+portfinder.highestPort = 9000;
+
+let runningPort;
 
 const http = require("http");
 const app = require("./app.js");
 
 const server = http.createServer(app);
 
+startDatabase() 
+
 async function startServer() {
-  server.listen(PORT, () => {
-    console.log("Server is Listeninng ....");
-  });
+  portfinder.getPort((err, port) => {
+      if (err) throw err;
+      server.listen(port, () => {
+        runningPort = port
+        console.log(`Server is Listening on port: ${port}`);
+      });
+    });
 }
 
 startServer();

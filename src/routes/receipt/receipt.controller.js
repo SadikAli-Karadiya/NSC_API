@@ -10,6 +10,7 @@ const SalaryReceipt = require("../../models/salaryReceipt");
 const HourlySalary = require("../../models/hourlySalary");
 const MonthlySalary = require("../../models/monthlySalary");
 const Transaction = require("../../models/transaction");
+const FeesSender = require('../mail/feesConfrim')
 const bcrypt = require("bcrypt");
 
 //-------------------------------------------------------------
@@ -88,6 +89,13 @@ const generateReceiptFunction = async (
     { _id: academic_details.fees_id },
     { $inc: { pending_amount: -amount } }
   );
+    FeesSender = ({ 
+      email : academic_details.student_id.contact_info_id.email, 
+      full_name : academic_details.student_id.basic_info_id.full_name,
+      amount : net_amount, 
+      admin : admin_details.username
+    })
+
 
   return fees_receipt_details;
 };

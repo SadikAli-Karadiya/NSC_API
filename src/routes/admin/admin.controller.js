@@ -113,14 +113,14 @@ async function httpSetDefault(req, res) {
 async function httpLoginRequest(req, res) {
   const loginData = req.body;
   if (!loginData.username || !loginData.password) {
-    return res.status(400).json({ ok: false, error: "Please Enter Value" });
+    return res.status(500).json({ ok: false, error: "Please Enter Value" });
   }
 
   try {
     const adminData = await getAdminByUsername(loginData.username);
 
     if (!adminData) {
-      return res.status(400).json({
+      return res.status(500).json({
         ok: false,
         error: "User Not found",
       });
@@ -132,7 +132,7 @@ async function httpLoginRequest(req, res) {
         .status(200)
         .json({ ok: true, success: "Login succesfully", token: token });
     } else {
-      return res.status(400).json({ error: "Invalid username or Password" });
+      return res.status(500).json({ error: "Invalid username or Password" });
     }
   } catch (error) {
     return res.json({ error: `${error}` });

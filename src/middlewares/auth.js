@@ -1,8 +1,9 @@
 const { config } = require("dotenv");
 const jwt = require("jsonwebtoken");
 const { getAdminByUser } = require("../model/admin.model");
+const {JWT_SIGN} = require('../../constant')
 
-const JWTSign = process.env.JWT_SIGN;
+const JWTSign = JWT_SIGN;
 
 async function createToken(userID) {
   try {

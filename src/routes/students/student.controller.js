@@ -9,11 +9,13 @@ const Transaction = require("../../models/transaction")
 const formidable = require("formidable");
 const ImageKit = require("imagekit");
 const fs = require("fs");
+const EmailSender = require('../mail/studentMail')
+const {IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, IMAGEKIT_URL_ENDPOINT} = require('../../../constant')
 
 const imagekit = new ImageKit({
-    publicKey : process.env.IMAGEKIT_PUBLIC_KEY,
-    privateKey : process.env.IMAGEKIT_PRIVATE_KEY,
-    urlEndpoint : process.env.IMAGEKIT_URL_ENDPOINT 
+    publicKey : IMAGEKIT_PUBLIC_KEY,
+    privateKey : IMAGEKIT_PRIVATE_KEY,
+    urlEndpoint : IMAGEKIT_URL_ENDPOINT 
 });
 
 //-----------------------------------------------------
@@ -172,6 +174,7 @@ async function registerStudent(req, res, next) {
         school_name: school_name.trim(),
       });
 
+      EmailSender({email, full_name });
       res.status(201).json({
         //201 = Created successfully
         success: true,
