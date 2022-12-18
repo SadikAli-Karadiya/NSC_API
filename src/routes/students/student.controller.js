@@ -29,158 +29,168 @@ async function registerStudent(req, res, next) {
         return res.status(500).json({ success: false, message: err.message });
       }
       let photo = "";
-      if (files.photo.originalFilename != "" && files.photo.size != 0) {
-        const ext = files.photo.mimetype.split("/")[1].trim();
+      const myPromise = new Promise(async(resolve, reject) => {
+        if (files.photo.originalFilename != "" && files.photo.size != 0) {
+          const ext = files.photo.mimetype.split("/")[1].trim();
 
-        if (files.photo.size >= 2000000) {
-          // 2000000(bytes) = 2MB
-          return res.status(400).json({
-            success: false,
-            message: "Photo size should be less than 2MB",
-          });
-        }
-        if (ext != "png" && ext != "jpg" && ext != "jpeg") {
-          return res.status(400).json({
-            success: false,
-            message: "Only JPG, JPEG or PNG photo is allowed",
-          });
-        }
-
-        var oldPath = files.photo.filepath;
-        var fileName = Date.now() + "_" + files.photo.originalFilename;
-
-        fs.readFile( oldPath, function (err, data) {
-          if (err) {
-            return res
-              .status(500)
-              .json({ success: false, message: err.message });
-          }
-          imagekit.upload({
-            file : data,
-            fileName : fileName, 
-            overwriteFile: true,
-            folder: '/students_profiles'
-          }, function(error, result) {
-            if(error) {
-              return res
-                .status(500)
-                .json({ success: false, message: error.message });
-            }
-            photo = result.url
-          });
-        });
-      }
-
-      const {
-        class_name,
-        full_name,
-        mother_name,
-        whatsapp_no,
-        alternate_no,
-        dob,
-        gender,
-        address,
-        email,
-        discount,
-        reference,
-        net_fees,
-        note,
-        school_name,
-        admission_date,
-      } = fields;
-      const class_id = class_name;
-
-      // START -> Checking if student already exist in same class
-      const check_basic_info = await BasicInfo.findOne({
-        full_name: { $regex: `^${full_name}$`, $options: "i" },
-      });
-
-      if (check_basic_info) {
-        const check_student = await Student.findOne({
-          basic_info_id: check_basic_info._id,
-        }).populate("basic_info_id");
-
-        const check_class = await Classes.findById(class_id);
-
-        if (check_student) {
-          const check_academic = await Academic.findOne(
-            { class_id: check_class._id, student_id: check_student._id },
-            "-fees_id"
-          );
-
-          if (check_academic) {
-            return res.status(200).json({
+          if (files.photo.size >= 2000000) {
+            // 2000000(bytes) = 2MB
+            return res.status(400).json({
               success: false,
-              message: "Student already exists in the selected class",
+              message: "Photo size should be less than 2MB",
             });
           }
+          if (ext != "png" && ext != "jpg" && ext != "jpeg") {
+            return res.status(400).json({
+              success: false,
+              message: "Only JPG, JPEG or PNG photo is allowed",
+            });
+          }
+
+          var oldPath = files.photo.filepath;
+          var fileName = Date.now() + "_" + files.photo.originalFilename;
+
+          fs.readFile( oldPath, function (err, data) {
+            if (err) {
+              return res
+                .status(500)
+                .json({ success: false, message: err.message });
+            }
+            imagekit.upload({
+              file : data,
+              fileName : fileName, 
+              overwriteFile: true,
+              folder: '/students_profiles'
+            }, function(error, result) {
+              if(error) {
+                return res
+                  .status(500)
+                  .json({ success: false, message: error.message });
+              }
+              photo = result.url
+              resolve();
+            });
+          });
         }
-      }
-      // END
+        else{
+          resolve()
+        }
+      })
 
-      const basic_info_id = await BasicInfo.create({
-        photo: photo,
-        full_name: full_name.trim(),
-        gender,
-        dob,
-      });
+      myPromise.then(async ()=> {
 
-      const contact_info_id = await ContactInfo.create({
-        whatsapp_no: whatsapp_no.trim(),
-        alternate_no: alternate_no ? alternate_no.trim() : "",
-        email: email ? email.trim() : "",
-        address: address.trim(),
-      });
-
-      // START -> Creating student id
-      let studentId;
-      await Student.find({})
-        .then((docs) => {
-          studentId = docs.length + 1;
-        })
-        .catch((error) => {
-          res.status(400).json({ message: error.message });
+        const {
+          class_name,
+          full_name,
+          mother_name,
+          whatsapp_no,
+          alternate_no,
+          dob,
+          gender,
+          address,
+          email,
+          discount,
+          reference,
+          net_fees,
+          note,
+          school_name,
+          admission_date,
+        } = fields;
+        const class_id = class_name;
+  
+        // START -> Checking if student already exist in same class
+        const check_basic_info = await BasicInfo.findOne({
+          full_name: { $regex: `^${full_name}$`, $options: "i" },
         });
-      // END
+  
+        if (check_basic_info) {
+          const check_student = await Student.findOne({
+            basic_info_id: check_basic_info._id,
+          }).populate("basic_info_id");
+  
+          const check_class = await Classes.findById(class_id);
+  
+          if (check_student) {
+            const check_academic = await Academic.findOne(
+              { class_id: check_class._id, student_id: check_student._id },
+              "-fees_id"
+            );
+  
+            if (check_academic) {
+              return res.status(200).json({
+                success: false,
+                message: "Student already exists in the selected class",
+              });
+            }
+          }
+        }
+        // END
+  
+        const basic_info_id = await BasicInfo.create({
+          photo: photo,
+          full_name: full_name.trim(),
+          gender,
+          dob,
+        });
+  
+        const contact_info_id = await ContactInfo.create({
+          whatsapp_no: whatsapp_no.trim(),
+          alternate_no: alternate_no ? alternate_no.trim() : "",
+          email: email ? email.trim() : "",
+          address: address.trim(),
+        });
+  
+        // START -> Creating student id
+        let studentId;
+        await Student.find({})
+          .then((docs) => {
+            studentId = docs.length + 1;
+          })
+          .catch((error) => {
+            res.status(400).json({ message: error.message });
+          });
+        // END
+  
+        const student = await Student.create({
+          student_id: studentId,
+          mother_name: mother_name.trim(),
+          reference,
+          note,
+          admission_date,
+          basic_info_id: basic_info_id._id,
+          contact_info_id: contact_info_id._id,
+        });
+        
+        const fees = await Fees.create({
+          discount : discount == null || discount == undefined || discount == '' ? 0 : discount,
+          net_fees: net_fees,
+          pending_amount: net_fees,
+        });
+  
+        //START => Updating total student in class
+        const class_info = await Classes.findById(class_id);
+  
+        await Classes.findByIdAndUpdate(class_id, {
+          total_student: class_info.total_student + 1,
+        });
+        // END
+  
+        const academic = await Academic.create({
+          class_id,
+          student_id: student._id,
+          fees_id: fees._id,
+          school_name: school_name.trim(),
+        });
+  
+        EmailSender({email, full_name });
+        res.status(201).json({
+          //201 = Created successfully
+          success: true,
+          message: "Student registration successfull",
+          student_id: student.student_id
+        });
+      })
 
-      const student = await Student.create({
-        student_id: studentId,
-        mother_name: mother_name.trim(),
-        reference,
-        note,
-        admission_date,
-        basic_info_id: basic_info_id._id,
-        contact_info_id: contact_info_id._id,
-      });
-      
-      const fees = await Fees.create({
-        discount : discount == null || discount == undefined || discount == '' ? 0 : discount,
-        net_fees: net_fees,
-        pending_amount: net_fees,
-      });
-
-      //START => Updating total student in class
-      const class_info = await Classes.findById(class_id);
-
-      await Classes.findByIdAndUpdate(class_id, {
-        total_student: class_info.total_student + 1,
-      });
-      // END
-
-      const academic = await Academic.create({
-        class_id,
-        student_id: student._id,
-        fees_id: fees._id,
-        school_name: school_name.trim(),
-      });
-
-      EmailSender({email, full_name });
-      res.status(201).json({
-        //201 = Created successfully
-        success: true,
-        message: "Student registration successfull",
-        student_id: student.student_id
-      });
     });
   } catch (error) {
     next(error);
@@ -437,8 +447,7 @@ async function cancelStudentAdmission(req, res, next) {
   try {
     const student_details = await Student.findOneAndUpdate(
       { student_id: req.params.student_id },
-      { is_cancelled: 1 },
-      { returnOriginal: true }
+      { is_cancelled: 1 }
     );
 
     const academic_info = await Academic.findOne({

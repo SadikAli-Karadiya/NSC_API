@@ -66,6 +66,7 @@ async function registerFaculty(req, res) {
                   .json({ success: false, message: error.message });
               }
               photo = result.url
+              resolve();
             });
           });
         }
