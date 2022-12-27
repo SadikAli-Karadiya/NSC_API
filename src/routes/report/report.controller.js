@@ -5,8 +5,9 @@ const {
 } = require("../../model/report.model");
 
 async function httpGetReport(req, res) {
+  const section = req.params.section;
   try {
-    const data = await GetReport();
+    const data = await GetReport(section);
     return res.status(200).json({
       ok: true,
       data: data,

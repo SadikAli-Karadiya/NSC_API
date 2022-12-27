@@ -2,7 +2,7 @@ require("dotenv").config();
 const portfinder = require("portfinder");
 const {startDatabase} = require('../src/database/databaseConn')
 
-portfinder.basePort = 4000;
+portfinder.basePort = 4250;
 portfinder.highestPort = 9000;
 
 const http = require("http");

@@ -1,7 +1,7 @@
 const fees_receipts = require("../models/feesReceipt");
 const salaryReceipt = require("../models/salaryReceipt");
 
-async function GetReport() {
+async function GetReport(section) {
   // const data = await fees_receipts.find().populate("transaction_id");
   const data = await fees_receipts.aggregate([
     {
@@ -36,6 +36,14 @@ async function GetReport() {
                     ],
                   },
                 },
+                {
+                  $lookup: {
+                    from: "classes",
+                    localField: "class_id",
+                    foreignField: "_id",
+                    as: "class",
+                  },
+                },
               ],
             },
           },
@@ -60,11 +68,14 @@ async function GetReport() {
     },
   ]);
 
-  const current_Date = new Date();
-  current_Date.setDate(current_Date.getDate());
+  // const current_Date = new Date();
+  // current_Date.setDate(current_Date.getDate());
 
-  data.reverse();
-  return data;
+  const filterPrimary = data.filter((m) => {
+    return m?.fees[0].academics[0].class[0].is_primary == section;
+  });
+  filterPrimary.reverse();
+  return filterPrimary;
 }
 
 async function GetSalaryReport() {

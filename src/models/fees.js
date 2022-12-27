@@ -15,7 +15,7 @@ const fees = new mongoose.Schema({
     },
     paid_upto:{
         type: Number,
-        default: 0
+        default: -1
     },
     date:{
         type: Date,

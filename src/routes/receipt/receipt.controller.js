@@ -79,20 +79,43 @@ const generateReceiptFunction = async (
     const salary_receipts = await SalaryReceipt.find();
     const fees_receipt_id = fees_receipts.length + salary_receipts.length + 1 + 1000;
     
+    
     let lastPaid = last_paid;
-    if(lastPaid == 0){
+    if(lastPaid == -1){
       lastPaid = new Date(student_details.admission_date).getMonth() + 1;
     }
     
-    let toMonth = (lastPaid + Number(total_months) -1 ) % 12;
-
+    let toMonth = lastPaid == 12 
+                  ? 
+                    total_months == 1
+                    ?
+                      lastPaid
+                    :
+                      Number(total_months) - 1 
+                  : 
+                    (lastPaid + Number(total_months)) % 12 == 0
+                    ?
+                      1
+                    :
+                      (lastPaid + Number(total_months)) % 12
+                      
     const fees_receipt_details = await FeesReceipt.create({
       fees_receipt_id,
       fees_id: academic_details.fees_id,
       admin_id: admin_details._id,
       transaction_id: transaction_details._id,
-      from_month: last_paid == 0 ? lastPaid : lastPaid + 1,
-      to_month: toMonth == 0 ? 12 : toMonth,
+      from_month: last_paid == -1
+                  ?
+                    lastPaid
+                  :
+                    lastPaid == 12
+                      ?
+                        lastPaid = 1
+                      : 
+                        lastPaid + 1,
+      to_month: toMonth,
+
+              
       discount,
     });
 
@@ -101,7 +124,7 @@ const generateReceiptFunction = async (
       { _id: academic_details.fees_id },
       { 
         $inc: { pending_amount: -amount } ,
-        paid_upto: fees_receipt_details.to_month
+        paid_upto: toMonth
       }
     );
     
@@ -125,7 +148,7 @@ const generateReceiptFunction = async (
   
     return fees_receipt_details;
   } catch(error){
-    console.log(error);
+    next(error);
   }
 };
 
@@ -188,7 +211,25 @@ async function updateStudentReceipt(req, res, next) {
 
     const net_amount = amount - discount;
 
-    let toMonth = (Number(last_paid) + (Number(total_months) - 1)) % 12
+    let lastPaid = Number(last_paid)
+   
+    let toMonth = lastPaid == 12 
+                  ? 
+                    total_months == 1
+                    ?
+                      lastPaid
+                    :
+                      total_months - 1 
+                  : 
+                    total_months == 1
+                    ?
+                     lastPaid
+                    :
+                      (lastPaid + (total_months - 1)) % 12 == 0
+                      ?
+                        1
+                      :
+                        (lastPaid + (total_months - 1)) % 12
 
     const receipt_details = await FeesReceipt.findOneAndUpdate(
       { fees_receipt_id },
@@ -196,8 +237,8 @@ async function updateStudentReceipt(req, res, next) {
         admin_id: admin_details._id,
         discount,
         is_edited: 1,
-        from_month: Number(last_paid) + 1,
-        to_month: toMonth == 0 ? 12 : toMonth,
+        from_month: lastPaid,
+        to_month: toMonth,
         date: Date.now(),
       }
     );
@@ -223,7 +264,7 @@ async function updateStudentReceipt(req, res, next) {
       { _id: receipt_details.fees_id },
       { 
         $inc: { pending_amount: pending_amount },
-        paid_upto : receipt_details.to_month 
+        paid_upto : toMonth 
       }
     );
 
@@ -344,7 +385,6 @@ async function searchReceipt(req, res, next) {
       student_data.map(function (item) {
       for(var i=0; i<item.academics?.length && item.academics[i].class?.length > 0; i++){
           for(var j=0; j<item.academics[i].fees?.length; j++){
-              // console.log(1)
 
             // for(var k=0; k<item.academics.fees.fees_receipt?.length; k++){
               const student_full_name = item?.basic_info[0]?.full_name?.toLowerCase();
