@@ -1,16 +1,10 @@
-const staffs = require("../../models/staff");
-const BasicInfo = require("../../models/basicinfo");
 const FeesReceipt = require("../../models/feesReceipt");
-const ContactInfo = require("../../models/contactinfo");
-const transactions = require("../../models/transaction");
 const salary_receipt = require("../../models/salaryReceipt");
 const hourly_salary = require("../../models/hourlySalary");
 const monthly_salary = require("../../models/monthlySalary")
+const transactions = require("../../models/transaction")
+const Notification = require("../../models/notification")
 const Admin = require("../../models/admin")
-const bcrypt = require('bcrypt');
-
-const { default: mongoose } = require("mongoose");
-const { populate } = require("../../models/admin");
 
 // ---------------------------------------------------
 //-------------- ALL SALARY RECIEPT ------------------
@@ -21,7 +15,6 @@ function allSalary(req, res) {
             res.status(200).json({
                 recieptdata: result
             });
-
         })
         .catch(err => {
             res.status(500).json({
@@ -35,7 +28,7 @@ function allSalary(req, res) {
 // ---------------------------------------------------
 async function salaryFaculty(req, res) {
     try {
-        const { is_by_cheque, is_by_cash, is_by_upi, cheque_no, upi_no, amount, is_hourly, total_hours, rate_per_hour, total_amount, staff_id, admin, } = req.body
+        const { is_by_cheque, is_by_cash, is_by_upi, cheque_no, cheque_date, upi_no, amount, is_hourly, total_hours, rate_per_hour, total_amount, staff_id, admin } = req.body
         const admin_details = await Admin.findOne({ username: admin })
         
         const salaryreceipts = await salary_receipt.find()
@@ -44,7 +37,13 @@ async function salaryFaculty(req, res) {
         fees_receipts.length + salaryreceipts.length + 1 + 1000;
 
         const Salary = await transactions.create({
-            is_by_cheque, is_by_cash, is_by_upi, cheque_no, upi_no, amount
+            is_by_cheque, 
+            is_by_cash, 
+            is_by_upi, 
+            cheque_no: cheque_no != "" ? cheque_no : -1,
+            cheque_date: cheque_date != "" ? cheque_date : '',
+            upi_no: upi_no != "" ? upi_no : "", 
+            amount
         });
 
         const salaryreceipt = await salary_receipt.create({
@@ -73,7 +72,14 @@ async function salaryFaculty(req, res) {
             })
         }
 
-
+        if(is_by_cheque){
+          await Notification.create({
+            receipt_id : salaryreceipt_id,
+            cheque_no,
+            cheque_date,
+            is_deposited: 0
+          })
+        }
 
         res.status(201).json({
             success: true,
@@ -86,27 +92,6 @@ async function salaryFaculty(req, res) {
     }
 }
 
-// -------------------------------------------------------------------------------------------
-// -------------- SINGLE FACULTY SALARY DETAILS SEARCH BY FACULTY ID  ------------------------
-// ------------------------------------------------------------------------------------------
-// async function getFaculty(req, res) {
-
-//     try {
-
-//         let staff_Details;
-//         staff_Details = await salary_receipt.find({ staff_id: req.params.id })
-//             .populate("transaction_id").populate({ path: "staff_id", populate: ["basic_info_id", "contact_info_id"] })
-//         res.status(200).json({
-//             success: true,
-
-//             staff_Details,
-
-
-//         });
-//     } catch (error) {
-//         return res.status(500).send(error.stack);
-//     }
-// }
 
 // ------------------------------------------------------------------------------------------
 // -------------- SINGLE FACULTY TOTAL SALARY RECIEPT  --------------------------------------
@@ -115,7 +100,7 @@ async function getFacultyhistory(req, res) {
     try {
 
         let staff_History;
-        staff_History = await salary_receipt.find({ staff_id: req.params.id }).populate("admin_id").populate("transaction_id").populate("staff_id")
+        staff_History = await salary_receipt.find({ staff_id: req.params.id, is_cancelled: 0 }).populate("admin_id").populate("transaction_id").populate("staff_id")
 
         res.status(200).json({
             success: true,
@@ -175,6 +160,7 @@ async function updateStaffReceipt(req, res, next) {
       is_hourly,
       rate_per_hour,
       cheque_no,
+      cheque_date,
       upi_no,
       amount,
       admin_id,
@@ -185,6 +171,7 @@ async function updateStaffReceipt(req, res, next) {
       {
         admin_id,
         is_hourly,
+        is_edited: 1,
         date: Date.now(),
       }
     );
@@ -232,11 +219,21 @@ async function updateStaffReceipt(req, res, next) {
         is_by_cash,
         is_by_upi,
         cheque_no: cheque_no ? cheque_no : -1,
+        cheque_date: cheque_date ? cheque_date : '',
         upi_no: upi_no ? upi_no : "",
         amount,
         date: Date.now(),
       }
     );
+
+    if(is_by_cheque){
+      await Notification.create({
+        receipt_id : salary_receipt_id,
+        cheque_no,
+        cheque_date,
+        is_deposited: 0
+      })
+    }
 
     res.status(200).json({
       success: true,
@@ -253,6 +250,5 @@ module.exports = {
     allSalary,
     getsalary,
     updateStaffReceipt,
-    // getFaculty,
     getFacultyhistory,
 };

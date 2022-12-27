@@ -7,7 +7,7 @@ studentRouter.post("/register", registerStudent);
 
 studentRouter.post("/", getAllStudents);
 
-studentRouter.get("/details/:id_name_whatsapp", getStudentDetails);
+studentRouter.get("/details/:id_name_whatsapp/:is_primary", getStudentDetails);
 
 studentRouter.get("/details/universal/:id_name_whatsapp", getStudentDetailsUniversal);
 

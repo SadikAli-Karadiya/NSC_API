@@ -17,7 +17,7 @@ const Email = (options) => {
   });
 };
 // send email
-const EmailSender = ({ email, full_name }) => {
+const EmailSender = ({ email, full_name, studentID }) => {
   const options = {
     from: `Nasir Sir Classes 👨‍🏫 <${USER}>`,
     to: `${email}`,
@@ -37,6 +37,7 @@ const EmailSender = ({ email, full_name }) => {
               Form Nasir Sir Classes
             </p>
             <div style="font-size: .8rem; margin: 0 30px">
+            <h2> Student ID : , ${studentID} </h2>
             <h2> Hello, ${full_name.toUpperCase()} </h2>
             <p>Welcome to Nasir Classes! We’re excited for the opportunity to help you succeed in your studies.</p>
             <p>We want students like you to be able to reach their full potential. To support this goal, we have an effective and flexible teaching staff who are ready with individualized attention.</p>

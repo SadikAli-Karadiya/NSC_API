@@ -26,6 +26,10 @@ const salaryReceipt = new mongoose.Schema({
         ref: "transactions",
         required: true,
     },
+    is_edited:{
+        type: Number,
+        default: 0
+    },
     date:{
         type: Date,
         default: Date.now,

@@ -9,8 +9,8 @@ async function httpRegisterMail(req, res) {
   }
   try {
     //   const { fullName, email, phone, message } = req.body;
-    const { email, full_name } = req.body;
-    EmailSender({ email, full_name });
+    const { email, full_name, studentID } = req.body;
+    EmailSender({ email, full_name, studentID });
     res.status(200).json({ msg: "Your message sent successfully" });
   } catch (error) {
     res.status(500).json(error.message);
@@ -31,8 +31,8 @@ async function httpFeesConfirmMail(req, res) {
   }
   try {
     //   const { fullName, email, phone, message } = req.body;
-    const { email, full_name, amount, admin, date } = req.body;
-    const data = await FeesSender({ email, full_name, amount, date, admin });
+    const { email, full_name, amount, admin, studentID } = req.body;
+    const data = await FeesSender({ email, full_name, amount, admin, studentID });
     return res.status(200).json({ msg: "Your message sent successfully" });
   } catch (error) {
     return res.status(500).json(error.message);
@@ -40,13 +40,12 @@ async function httpFeesConfirmMail(req, res) {
 }
 
 async function httpPendingFees(req, res) {
-  const data = req.body;
-  const students = data.students;
+  const students = req.body;  
   try {
     students.map((student) => {
-      email = student.basic_info[0].email;
+      email = student.contact_info[0].email;
       full_name = student.basic_info[0].full_name;
-      PendingSender({ email, full_name });
+      PendingSender({ email, full_name, studentID: student.student_id});
     });
 
     return res.status(200).json({ success: true, msg: "Your message sent successfully" });

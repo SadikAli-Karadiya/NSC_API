@@ -7,6 +7,7 @@ const studentRouter = require("./routes/students/student.routes");
 const receiptRouter = require("./routes/receipt/receipt.routes");
 const reportRouter = require("./routes/report/report.route");
 const classesRouter = require("./routes/classes/classes.routes");
+const notificationRouter = require("./routes/notification/notification.routes");
 const imagekitAuthRouter = require("./routes/imagekit/imagekit.routes");
 const cors = require("cors");
 const mailRouter = require("./routes/mail/mail.route");
@@ -33,6 +34,7 @@ app.use("/salary", SalaryRouter);
 app.use("/imagekit", imagekitAuthRouter);
 
 app.use("/mail", mailRouter);
+app.use("/notifications", notificationRouter);
 
 
 app.get("/*", (req, res) => {

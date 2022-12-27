@@ -21,6 +21,10 @@ const transaction = new mongoose.Schema({
         type: Number,
         default: -1
     },
+    cheque_date:{
+        type: String,
+        default: ''
+    },
     upi_no:{
         type: String,
         default: "-1",

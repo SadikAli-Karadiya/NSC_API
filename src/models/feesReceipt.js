@@ -21,9 +21,21 @@ const feesReceipt = new mongoose.Schema({
         ref: "transactions",
         required: true,
     },
+    from_month:{
+        type: Number,
+        default: 0
+    },
+    to_month:{
+        type: Number,
+        default: 0
+    },
     discount:{
         type: Number,
         default: 0,
+    },
+    is_edited:{
+        type: Number,
+        default: 0
     },
     date:{
         type: Date,

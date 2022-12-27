@@ -38,9 +38,9 @@ async function registerFaculty(req, res) {
       const myPromise = new Promise((resolve, reject) => {
         if (files.photo.originalFilename != '' && files.photo.size != 0) {
           const ext = files.photo.mimetype.split('/')[1].trim();
-          if (files.photo.size >= 2000000) { // 2000000(bytes) = 2MB
-            return res.status(400).json({ success: false, message: 'Photo size should be less than 2MB' })
-          }
+          // if (files.photo.size >= 2000000) { // 2000000(bytes) = 2MB
+          //   return res.status(400).json({ success: false, message: 'Photo size should be less than 2MB' })
+          // }
           if (ext != "png" && ext != "jpg" && ext != "jpeg") {
             return res.status(400).json({ success: false, message: 'Only JPG, JPEG or PNG photo is allowed' })
           }
@@ -261,13 +261,13 @@ async function editFaculty(req, res) {
         ) {
           const ext = files.photo.mimetype.split("/")[1].trim();
 
-          if (files.photo.size >= 2000000) {
-            // 2000000(bytes) = 2MB
-            return res.status(400).json({
-              success: false,
-              message: "Photo size should be less than 2MB",
-            });
-          }
+          // if (files.photo.size >= 2000000) {
+          //   // 2000000(bytes) = 2MB
+          //   return res.status(400).json({
+          //     success: false,
+          //     message: "Photo size should be less than 2MB",
+          //   });
+          // }
           if (ext != "png" && ext != "jpg" && ext != "jpeg") {
             return res.status(400).json({
               success: false,

@@ -29,7 +29,7 @@ async function getAllPendingStudentsFees(req, res, next) {
           "-_id class_name medium stream batch_start_year batch_end_year is_active",
         match: {
           is_active: 1,
-          is_primary,
+          is_primary: is_primary == 1 ? 1 : 0,
         },
       })
       .populate({

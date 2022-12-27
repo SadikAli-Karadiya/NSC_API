@@ -18,7 +18,7 @@ const Email = (options) => {
   });
 };
 // send email
-const FeesSender = ({ email, full_name, amount, admin }) => {
+const FeesSender = ({ email, full_name, amount, admin, studentID }) => {
   let date = new Date()
   date = `${date.getDate() < 10 ? "0" + date.getDate() : date.getDate()}-${date.getMonth() + 1 < 10 ? "0" + (date.getMonth() + 1) : date.getMonth() + 1}-${date.getFullYear()}`;
 
@@ -41,6 +41,7 @@ const FeesSender = ({ email, full_name, amount, admin }) => {
                     Payment SuccessFull
             </p>
             <div style="font-size: .8rem; margin: 0 30px">
+            <h2> Student ID: ${studentID} </h2>
             <h2> Hello, ${full_name.toUpperCase()} </h2>
             <p>Thank you for your tuition fees. We're glad to have you as a student at Nasir sir classes. We hope that this will be a great experience for you.</p>
             <p>Amount Recived ${amount} by ${admin}</p>

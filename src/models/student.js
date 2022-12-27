@@ -10,6 +10,9 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: [true, "Please enter mother name"],
   },
+  father_occupation:{
+    type: String,
+  },
   basic_info_id: {
     type: mongoose.Schema.ObjectId,
     ref: "basic_infos",

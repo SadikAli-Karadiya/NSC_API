@@ -33,13 +33,13 @@ async function registerStudent(req, res, next) {
         if (files.photo.originalFilename != "" && files.photo.size != 0) {
           const ext = files.photo.mimetype.split("/")[1].trim();
 
-          if (files.photo.size >= 2000000) {
-            // 2000000(bytes) = 2MB
-            return res.status(400).json({
-              success: false,
-              message: "Photo size should be less than 2MB",
-            });
-          }
+          // if (files.photo.size >= 2000000) {
+          //   // 2000000(bytes) = 2MB
+          //   return res.status(400).json({
+          //     success: false,
+          //     message: "Photo size should be less than 2MB",
+          //   });
+          // }
           if (ext != "png" && ext != "jpg" && ext != "jpeg") {
             return res.status(400).json({
               success: false,
@@ -94,6 +94,7 @@ async function registerStudent(req, res, next) {
           net_fees,
           note,
           school_name,
+          father_occupation,
           admission_date,
         } = fields;
         const class_id = class_name;
@@ -157,6 +158,7 @@ async function registerStudent(req, res, next) {
           reference,
           note,
           admission_date,
+          father_occupation,
           basic_info_id: basic_info_id._id,
           contact_info_id: contact_info_id._id,
         });
@@ -182,7 +184,7 @@ async function registerStudent(req, res, next) {
           school_name: school_name.trim(),
         });
   
-        EmailSender({email, full_name });
+        EmailSender({email, full_name, studentID: studentId});
         res.status(201).json({
           //201 = Created successfully
           success: true,
@@ -283,10 +285,11 @@ async function getAllStudents(req, res) {
 async function getStudentDetails(req, res, next) {
   try {
     let student_params = req.params.id_name_whatsapp;
+    let is_primary = req.params.is_primary;
     let students_detail = [];
 
     // Getting student basic info and contact info details
-    let data = await Student.find()
+    let data = await Student.find({is_cancelled:0})
       .populate({
         path: "basic_info_id",
       })
@@ -314,13 +317,13 @@ async function getStudentDetails(req, res, next) {
     });
 
     if (!data[0]) {
-      res.status(200).json({
+      return res.status(200).json({
         success: false,
         message: "No student found",
       });
     }
 
-    let myPromise = new Promise(function (resolve) {
+    let myPromise = new Promise(function (resolve, reject) {
       var i = 0;
       data.forEach(async (item) => {
         //getting academic details
@@ -331,8 +334,13 @@ async function getStudentDetails(req, res, next) {
           path: "class_id",
           match: {
             is_active: 1,
+            is_primary: is_primary == 1 ? 1 : 0
           },
         });
+
+         if (academic_details.class_id == null) {
+           reject()
+          }
         //Getting fees details
         const fees_details = await Fees.findById(academic_details.fees_id);
 
@@ -355,8 +363,16 @@ async function getStudentDetails(req, res, next) {
           students_detail,
         },
       });
-    });
+    },
+    ()=>{
+      return res.status(200).json({
+        success: false,
+        message: "No student found",
+      });
+    }
+    );
   } catch (error) {
+    console.log(error)
     next(error);
   }
 }
@@ -529,13 +545,13 @@ async function updateStudentDetails(req, res, next) {
         ) {
           const ext = files.photo.mimetype.split("/")[1].trim();
   
-          if (files.photo.size >= 2000000) {
-            // 2000000(bytes) = 2MB
-            return res.status(400).json({
-              success: false,
-              message: "Photo size should be less than 2MB",
-            });
-          }
+          // if (files.photo.size >= 2000000) {
+          //   // 2000000(bytes) = 2MB
+          //   return res.status(400).json({
+          //     success: false,
+          //     message: "Photo size should be less than 2MB",
+          //   });
+          // }
           if (ext != "png" && ext != "jpg" && ext != "jpeg") {
             return res.status(400).json({
               success: false,
@@ -586,6 +602,7 @@ async function updateStudentDetails(req, res, next) {
           reference,
           note,
           school_name,
+          father_occupation,
           admission_date,
         } = fields;
   
@@ -599,6 +616,7 @@ async function updateStudentDetails(req, res, next) {
           { student_id },
           {
             mother_name: mother_name.trim(),
+            father_occupation: father_occupation.trim(),
             admission_date,
             reference,
             note,
