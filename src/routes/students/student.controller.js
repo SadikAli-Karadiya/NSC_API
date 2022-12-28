@@ -468,6 +468,7 @@ async function cancelStudentAdmission(req, res, next) {
 
     const academic_info = await Academic.findOne({
       student_id: student_details._id,
+      is_transferred: 0
     })
       .populate("fees_id", "")
       .populate({
@@ -477,6 +478,8 @@ async function cancelStudentAdmission(req, res, next) {
         },
       });
 
+      await Fees.findByIdAndUpdate(academic_info.fees_id, {pending_amount: 0})
+
     //START => Updating total student in class
     const class_info = await Classes.findById(academic_info.class_id);
     await Classes.findByIdAndUpdate(class_info._id, {
@@ -485,8 +488,7 @@ async function cancelStudentAdmission(req, res, next) {
 
     res.status(200).json({
       success: true,
-      message: "Admission successfully cancelled",
-      data: { pending_fees: academic_info.fees_id.pending_amount },
+      message: "Admission successfully cancelled"
     });
   } catch (error) {
     next(error);
