@@ -156,7 +156,7 @@ async function generateStudentReceipt(req, res, next) {
   try {
 
     const fees_receipt_details = await generateReceiptFunction(req.body);
-
+    
     if (fees_receipt_details == false) {
       return res.status(200).json({
         success: false,
@@ -387,7 +387,7 @@ async function searchReceipt(req, res, next) {
           for(var j=0; j<item.academics[i].fees?.length; j++){
 
             // for(var k=0; k<item.academics.fees.fees_receipt?.length; k++){
-              const student_full_name = item?.basic_info[0]?.full_name?.toLowerCase();
+              const student_full_name = item.basic_info.full_name.toLowerCase();
               let isStudentNameFound = false;
         
               if (isNaN(receipt_params)) {
