@@ -26,7 +26,7 @@ async function getAllPendingStudentsFees(req, res, next) {
       .populate({
         path: "class_id",
         select:
-          "-_id class_name medium stream batch_start_year batch_end_year is_active",
+          "-_id class_name medium stream batch_start_year is_active",
         match: {
           is_active: 1,
           is_primary: is_primary == 1 ? 1 : 0,
@@ -83,7 +83,7 @@ async function getAllPendingStudentsFees(req, res, next) {
 //     })
 //     .populate({
 //       path: 'class_id',
-//       select: '-_id class_name medium stream batch_start_year batch_end_year is_active',
+//       select: '-_id class_name medium stream batch_start_year is_active',
 //       match:{
 //         is_active : 1
 //       }
@@ -178,6 +178,12 @@ async function transferFeesToStudent(req, res, next) {
       return res.status(200).json({
         success: false,
         message: "Incorrect security pin",
+      });
+    }
+    if(result.error){
+      return res.status(500).json({
+        success: false,
+        message: result.error.message,
       });
     }
 

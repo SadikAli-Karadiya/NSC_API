@@ -1,6 +1,5 @@
 const express = require("express");
 const admin = require("../../models/admin");
-const { handleFunction } = require("../../whatsapp/test");
 const {
   httpInsertAdmin,
   httpLoginRequest,

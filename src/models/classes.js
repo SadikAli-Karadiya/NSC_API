@@ -7,11 +7,6 @@ const classes = new mongoose.Schema({
         requied: [true, 'Please enter batch_start_year'],
         minLength: [4, 'Please enter four digits only'],
     },
-    batch_end_year:{
-        type: Number,
-        requied: [true, 'Please enter batch_end_year'],
-        minLength: [4, 'Please enter four digits only'],
-    },
     class_name:{
         type: String,
         required: [true, 'Please enter class name'],

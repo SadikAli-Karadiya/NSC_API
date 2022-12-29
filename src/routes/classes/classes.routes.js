@@ -1,5 +1,5 @@
 const express = require("express");
-const {createNewClass, getAllClassesByYear, getAllClasses,  displayClass, updateClass, deleteClass, classSearch, transferClasses, displayStudentInClass,exportStudentInClass,exportPendingStudentInClass, studentSearchById_Name_Mobile} = require("./classes.controller");
+const {createNewClass, getAllClassesByYear, getAllClasses,  displayClass, updateClass, deleteClass, classSearch, transferClasses, deactivateClasses, displayStudentInClass,exportStudentInClass,exportPendingStudentInClass, studentSearchById_Name_Mobile} = require("./classes.controller");
 const classesRouter = express.Router();
 
 
@@ -11,6 +11,7 @@ classesRouter.put("/update/:id",updateClass);
 classesRouter.put("/delete/:id",deleteClass);
 classesRouter.get("/search",classSearch);
 classesRouter.post("/transferclasses",transferClasses);
+classesRouter.post("/deactivate-classes",deactivateClasses);
 classesRouter.get("/displaystudentinclass/:id",displayStudentInClass);
 classesRouter.get("/exportStudentInClass/:id",exportStudentInClass);
 classesRouter.get("/exportPendingStudentInClass/:id",exportPendingStudentInClass);

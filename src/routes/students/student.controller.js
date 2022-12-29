@@ -289,7 +289,7 @@ async function getStudentDetails(req, res, next) {
     let students_detail = [];
 
     // Getting student basic info and contact info details
-    let data = await Student.find({is_cancelled:0})
+    let data = await Student.find({is_cancelled:{$ne: -1}})
       .populate({
         path: "basic_info_id",
       })

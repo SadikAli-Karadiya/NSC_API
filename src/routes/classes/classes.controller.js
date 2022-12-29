@@ -13,7 +13,6 @@ exports.createNewClass = async (req, res, next) => {
   try {
     const {
       batch_start_year,
-      batch_end_year,
       class_name,
       total_student,
       fees,
@@ -26,7 +25,6 @@ exports.createNewClass = async (req, res, next) => {
 
     const classes = await Classes.create({
       batch_start_year,
-      batch_end_year,
       class_name,
       total_student,
       fees,
@@ -84,7 +82,7 @@ exports.getAllClassesByYear = async (req, res) => {
   try {
     const classes = await Classes.aggregate([
       { $match: { is_active: { $ne: -1 } } },
-      { $group: { _id: { batch_start_year: '$batch_start_year', batch_end_year: '$batch_end_year' } } }, { $sort: { batch_start_year: -1 } },
+      { $group: { _id: { batch_start_year: '$batch_start_year'} } }, { $sort: { batch_start_year: -1 } },
     ])
 
     if (!classes[0]) {
@@ -255,13 +253,12 @@ exports.transferClasses = async (req, res, next) => {
     const classes_details = req.body;
 
     //Deactivating all the previous active classes
-    await Classes.updateMany({ is_active: 1 }, { $set: { is_active: 0 } });
+    // await Classes.updateMany({ is_active: 1 }, { $set: { is_active: 0 } });
 
     //Creating new classes
     classes_details.forEach(async (element) => {
       await Classes.create({
         batch_start_year: element.batch_start_year + 1,
-        batch_end_year: element.batch_end_year + 1,
         class_name: element.class_name,
         total_student: 0,
         fees: element.fees,
@@ -276,6 +273,32 @@ exports.transferClasses = async (req, res, next) => {
       success: true,
       data: classes_details,
       message: "Transfer classes successfully",
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+//-------------------------------------//
+// ----------Deactive Classes----------//
+//-------------------------------------//
+exports.deactivateClasses = async (req, res, next) => {
+  try {
+    const classes_details = req.body;
+
+    
+    //Creating new classes
+    classes_details.forEach(async (element) => {
+      console.log(element)
+      await Classes.findByIdAndUpdate(element._id, { is_active: 0 });
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Classes deactivated successfully",
     });
   } catch (error) {
     res.status(400).json({

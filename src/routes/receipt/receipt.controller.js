@@ -56,7 +56,7 @@ const generateReceiptFunction = async (
       .populate({
         path: "class_id",
         select:
-          "-_id class_name medium stream batch_start_year batch_end_year is_active",
+          "-_id class_name medium stream batch_start_year is_active",
         match: {
           is_active: 1,
         },
@@ -148,7 +148,7 @@ const generateReceiptFunction = async (
   
     return fees_receipt_details;
   } catch(error){
-    next(error);
+    return {error: error.message}
   }
 };
 
@@ -162,7 +162,14 @@ async function generateStudentReceipt(req, res, next) {
         success: false,
         message: "*Incorrect security pin",
       });
-    } else {
+    } 
+    else if(fees_receipt_details.error){
+      return res.status(200).json({
+        success: false,
+        message: fees_receipt_details.error.message,
+      });
+    }
+    else {
       res.status(200).json({
         success: true,
         message: "Receipt generated successfully",
@@ -387,7 +394,7 @@ async function searchReceipt(req, res, next) {
           for(var j=0; j<item.academics[i].fees?.length; j++){
 
             // for(var k=0; k<item.academics.fees.fees_receipt?.length; k++){
-              const student_full_name = item.basic_info.full_name.toLowerCase();
+              const student_full_name = item?.basic_info.full_name?.toLowerCase();
               let isStudentNameFound = false;
         
               if (isNaN(receipt_params)) {
@@ -397,8 +404,6 @@ async function searchReceipt(req, res, next) {
               if (student_full_name?.indexOf(receipt_params) > -1) {
                 isStudentNameFound = true;
               }
-        
-              let isReceiptFound = false;
         
               //Finding receipts from receipt_id
               let receipt;
