@@ -32,6 +32,7 @@ async function httpFeesConfirmMail(req, res) {
   try {
     //   const { fullName, email, phone, message } = req.body;
     const { email, full_name, amount, admin, studentID } = req.body;
+
     const data = await FeesSender({ email, full_name, amount, admin, studentID });
     return res.status(200).json({ msg: "Your message sent successfully" });
   } catch (error) {

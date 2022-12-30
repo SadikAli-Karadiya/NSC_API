@@ -40,10 +40,10 @@ const PendingSender = ({ email, full_name, studentID }) => {
             <div style="font-size: .8rem; margin: 0 30px">
             <h2> Student ID : ${studentID} </h2>
             <h2> Hello, ${full_name.toUpperCase()} </h2>
-            <p>I hope you're doing well. I'm writing to let you know that your Fees is due for renewal. We are a little concerned that we haven't received payment from you yet. If you have any questions or concerns, please don't hesitate to contact us .</p>
+            <p>We hope you're doing well. Kindly note that your Fees is pending. We are a little concerned that we haven't received payment from you yet. If you have any questions or concerns, please don't hesitate to contact us .</p>
            
              <p style="font-weight:800">Thank You   </p>
-              <p style="font-weight:800" >Team Nasir</b></p>
+              <p style="font-weight:800" >Team Nasir Sir</b></p>
             </div>
           </div>
         </div>

@@ -37,12 +37,12 @@ const EmailSender = ({ email, full_name, studentID }) => {
               Form Nasir Sir Classes
             </p>
             <div style="font-size: .8rem; margin: 0 30px">
-            <h2> Student ID : , ${studentID} </h2>
+            <h2> Student ID : ${studentID} </h2>
             <h2> Hello, ${full_name.toUpperCase()} </h2>
             <p>Welcome to Nasir Classes! We’re excited for the opportunity to help you succeed in your studies.</p>
             <p>We want students like you to be able to reach their full potential. To support this goal, we have an effective and flexible teaching staff who are ready with individualized attention.</p>
             <p style="font-weight:800">Thanks you   </p>
-              <p style="font-weight:800" >Team Nasir</b></p>
+              <p style="font-weight:800" >Team Nasir Sir</b></p>
             </div>
           </div>
         </div>
