@@ -289,7 +289,7 @@ async function getStudentDetails(req, res, next) {
     let students_detail = [];
 
     // Getting student basic info and contact info details
-    let data = await Student.find({is_cancelled:{$ne: -1}})
+    let data = await Student.find({is_cancelled:0})
       .populate({
         path: "basic_info_id",
       })
@@ -381,12 +381,13 @@ async function getStudentDetails(req, res, next) {
 //------- UNIVERSAL STUDENT DETAILS BY ID, FULLNAME, WHATSAPP_NO ---------
 //------------------------------------------------------------------------
 async function getStudentDetailsUniversal(req, res, next) {
-  try {
+   try {
     let student_params = req.params.id_name_whatsapp;
+    let is_primary = req.params.is_primary;
     let students_detail = [];
 
     // Getting student basic info and contact info details
-    let data = await Student.find({})
+    let data = await Student.find({is_cancelled:{$ne: -1}})
       .populate({
         path: "basic_info_id",
       })
@@ -416,18 +417,27 @@ async function getStudentDetailsUniversal(req, res, next) {
     if (!data[0]) {
       return res.status(200).json({
         success: false,
-        message: "No Student Found",
+        message: "No student found",
       });
     }
 
-    let myPromise = new Promise(function (resolve) {
+    let myPromise = new Promise(function (resolve, reject) {
       var i = 0;
       data.forEach(async (item) => {
         //getting academic details
         const academic_details = await Academic.findOne({
           student_id: item._id,
-        }).populate("class_id");
+          is_transferred: 0
+        }).populate({
+          path: "class_id",
+          match: {
+            is_primary: is_primary == 1 ? 1 : 0
+          },
+        });
 
+         if (academic_details.class_id == null) {
+           reject()
+          }
         //Getting fees details
         const fees_details = await Fees.findById(academic_details.fees_id);
 
@@ -450,8 +460,16 @@ async function getStudentDetailsUniversal(req, res, next) {
           students_detail,
         },
       });
-    });
+    },
+    ()=>{
+      return res.status(200).json({
+        success: false,
+        message: "No student found",
+      });
+    }
+    );
   } catch (error) {
+    console.log(error)
     next(error);
   }
 }

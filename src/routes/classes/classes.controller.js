@@ -253,7 +253,7 @@ exports.transferClasses = async (req, res, next) => {
     const classes_details = req.body;
 
     //Deactivating all the previous active classes
-    // await Classes.updateMany({ is_active: 1 }, { $set: { is_active: 0 } });
+    await Classes.updateMany({ is_active: 1 }, { $set: { is_active: 0 } });
 
     //Creating new classes
     classes_details.forEach(async (element) => {

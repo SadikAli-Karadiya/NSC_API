@@ -9,7 +9,7 @@ studentRouter.post("/", getAllStudents);
 
 studentRouter.get("/details/:id_name_whatsapp/:is_primary", getStudentDetails);
 
-studentRouter.get("/details/universal/:id_name_whatsapp", getStudentDetailsUniversal);
+studentRouter.get("/details/universal/:id_name_whatsapp/:is_primary", getStudentDetailsUniversal);
 
 studentRouter.put("/update/:student_id", updateStudentDetails);
 

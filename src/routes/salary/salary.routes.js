@@ -4,7 +4,7 @@ const {salaryFaculty,allSalary,getsalary,updateStaffReceipt,getFacultyhistory, }
 const SalaryRouter = express.Router();
 
 
-SalaryRouter.get("/",allSalary)
+SalaryRouter.get("/", allSalary)
 
 SalaryRouter.post("/create-reciept", salaryFaculty);
 

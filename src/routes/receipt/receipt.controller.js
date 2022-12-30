@@ -275,7 +275,17 @@ async function updateStudentReceipt(req, res, next) {
       }
     );
 
-  if(is_by_cheque){
+  if(transaction_details.is_by_cheque && is_by_cheque){
+    //updating notification
+    await Notification.findOneAndUpdate({
+      receipt_id : fees_receipt_id,
+    },{
+      cheque_no,
+      cheque_date,
+      is_deposited: 0
+    })
+  }
+  else if(is_by_cheque){
     await Notification.create({
       receipt_id : fees_receipt_id,
       cheque_no,
@@ -283,6 +293,7 @@ async function updateStudentReceipt(req, res, next) {
       is_deposited: 0
     })
   }
+  
 
     res.status(200).json({
       success: true,

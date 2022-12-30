@@ -3,7 +3,6 @@ const salary_receipt = require("../../models/salaryReceipt");
 const hourly_salary = require("../../models/hourlySalary");
 const monthly_salary = require("../../models/monthlySalary")
 const transactions = require("../../models/transaction")
-const Notification = require("../../models/notification")
 const Admin = require("../../models/admin")
 
 // ---------------------------------------------------
@@ -29,6 +28,7 @@ function allSalary(req, res) {
 async function salaryFaculty(req, res) {
     try {
         const { is_by_cheque, is_by_cash, is_by_upi, cheque_no, cheque_date, upi_no, amount, is_hourly, total_hours, rate_per_hour, total_amount, staff_id, admin } = req.body
+        
         const admin_details = await Admin.findOne({ username: admin })
         
         const salaryreceipts = await salary_receipt.find()
@@ -72,20 +72,11 @@ async function salaryFaculty(req, res) {
             })
         }
 
-        if(is_by_cheque){
-          await Notification.create({
-            receipt_id : salaryreceipt_id,
-            cheque_no,
-            cheque_date,
-            is_deposited: 0
-          })
-        }
-
         res.status(201).json({
             success: true,
             data: { salaryreceipt, hourlysalary, monthlysalary },
 
-            message: "Successfully regiser"
+            message: "Successfully created"
         });
     } catch (error) {
         res.status(500).json(error + " " + error.message);
@@ -134,9 +125,7 @@ async function getsalary(req, res) {
         res.status(200).json({
             success: true,
             data: {
-                receipt_details: { getdetails, hourlysalary, monthlysalary }
-
-
+              receipt_details: { getdetails, hourlysalary, monthlysalary }
             }
         });
 
@@ -225,15 +214,6 @@ async function updateStaffReceipt(req, res, next) {
         date: Date.now(),
       }
     );
-
-    if(is_by_cheque){
-      await Notification.create({
-        receipt_id : salary_receipt_id,
-        cheque_no,
-        cheque_date,
-        is_deposited: 0
-      })
-    }
 
     res.status(200).json({
       success: true,
