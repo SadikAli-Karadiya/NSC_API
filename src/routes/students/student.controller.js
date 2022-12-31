@@ -182,6 +182,7 @@ async function registerStudent(req, res, next) {
           student_id: student._id,
           fees_id: fees._id,
           school_name: school_name.trim(),
+          date: admission_date
         });
   
         EmailSender({email, full_name, studentID: studentId});
@@ -242,8 +243,7 @@ async function getAllStudents(req, res) {
                 as: "class",
                 pipeline:[
                     {
-                        $match: {
-                            is_active: 1, 
+                        $match: { 
                             is_primary
                         }
                     }
@@ -372,7 +372,6 @@ async function getStudentDetails(req, res, next) {
     }
     );
   } catch (error) {
-    console.log(error)
     next(error);
   }
 }
@@ -469,7 +468,6 @@ async function getStudentDetailsUniversal(req, res, next) {
     }
     );
   } catch (error) {
-    console.log(error)
     next(error);
   }
 }
@@ -484,9 +482,11 @@ async function cancelStudentAdmission(req, res, next) {
       { is_cancelled: 1 }
     );
 
-    const academic_info = await Academic.findOne({
+    const academic_info = await Academic.findOneAndUpdate({
       student_id: student_details._id,
       is_transferred: 0
+    },{
+      is_transferred: 1
     })
       .populate("fees_id", "")
       .populate({
@@ -496,7 +496,7 @@ async function cancelStudentAdmission(req, res, next) {
         },
       });
 
-      await Fees.findByIdAndUpdate(academic_info.fees_id, {pending_amount: 0})
+      // await Fees.findByIdAndUpdate(academic_info.fees_id, {pending_amount: 0})
 
     //START => Updating total student in class
     const class_info = await Classes.findById(academic_info.class_id);
@@ -792,20 +792,41 @@ async function deleteAndTransferStudentToNewClass(req, res, next) {
       pending_amount: class_info.fees,
     });
 
-    const last_academic = await Academic.findOneAndUpdate(
+    let last_academic = await Academic.findOneAndUpdate(
       { student_id: student_info._id, is_transferred : 0 },
       {
-        class_id,
+        class_id: class_id,
         fees_id: fees_details._id,
       }
     ).sort({ date: -1 });
+    
+    if(!last_academic){ // if student cancelled his admission and came back
+      const new_class_info = await Classes.findById(class_id);
 
-    //deleting old records of fees
-    const last_fees_details = await Fees.findByIdAndDelete(last_academic.fees_id);
+      const net_fees = new_class_info.fees;
 
-    const classes = await Classes.findByIdAndUpdate(last_academic.class_id, {
-      $inc: { total_student: -1 },
-    });
+      const fees = await Fees.create({
+        pending_amount: net_fees,
+        discount: 0,
+        net_fees,
+      });
+
+      last_academic = await Academic.create({
+        school_name: "",
+        student_id: student_id,
+        class_id: class_id,
+        fees_id: fees._id,
+        is_transferred: 0
+      })
+    }
+    else{ // if student mistakenly registered into other class
+      //deleting old records of fees
+      const last_fees_details = await Fees.findByIdAndDelete(last_academic.fees_id);
+  
+      const classes = await Classes.findByIdAndUpdate(last_academic.class_id, {
+        $inc: { total_student: -1 },
+      });
+    }
 
     return res.status(200).json({
       success: true,

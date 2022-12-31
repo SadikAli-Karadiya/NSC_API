@@ -292,7 +292,6 @@ exports.deactivateClasses = async (req, res, next) => {
     
     //Creating new classes
     classes_details.forEach(async (element) => {
-      console.log(element)
       await Classes.findByIdAndUpdate(element._id, { is_active: 0 });
     });
 
