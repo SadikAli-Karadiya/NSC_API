@@ -341,7 +341,7 @@ async function searchReceipt(req, res, next) {
           as: "academics",
           let: { class_id: "class_id" },
           pipeline: [
-            { $match: {is_transferred: 0} },
+            // { $match: {is_transferred: 0} },
             {
               $lookup: {
                 from: "classes",
@@ -398,62 +398,70 @@ async function searchReceipt(req, res, next) {
       },
     ]);
 
-
       let flag = false;
+
       student_data.map(function (item) {
       for(var i=0; i<item.academics?.length && item.academics[i].class?.length > 0; i++){
-          for(var j=0; j<item.academics[i].fees?.length; j++){
+        const student_full_name = item?.basic_info[0]?.full_name?.toLowerCase();
+        let isStudentNameFound = false;
+  
+        if (isNaN(receipt_params)) {
+          receipt_params = receipt_params.toLowerCase();
+        } 
+  
+        if (student_full_name?.indexOf(receipt_params) > -1) {
+          isStudentNameFound = true;
+        }
 
-            // for(var k=0; k<item.academics.fees.fees_receipt?.length; k++){
-              const student_full_name = item?.basic_info.full_name?.toLowerCase();
-              let isStudentNameFound = false;
-        
-              if (isNaN(receipt_params)) {
-                receipt_params = receipt_params.toLowerCase();
-              }
-        
-              if (student_full_name?.indexOf(receipt_params) > -1) {
-                isStudentNameFound = true;
-              }
-        
-              //Finding receipts from receipt_id
-              let receipt;
-              if (
-                item?.academics[i]?.fees[j]?.fees_receipt?.length > 0 &&
-                !isNaN(receipt_params)
-                ) {
+        if(isStudentNameFound){
+          
+        }
 
-                for(var k=0; k<item.academics[i].fees[j].fees_receipt?.length; k++){
-                  receipt = item.academics[i].fees[j].fees_receipt[k]
-                  if (receipt.fees_receipt_id == receipt_params) {
-                    item.academics[i].fees[j].fees_receipt = []
-                    item.academics[i].fees[j].fees_receipt.push(receipt)
-                    student_receipts.push(item);
-                    flag = true;
-                    break;
-                  }
-                }
-              }
-        
-              if (
-                item.student_id == receipt_params ||
-                isStudentNameFound ||
-                item?.contact_info[0]?.whatsapp_no == receipt_params
-              ){
-                student_receipts.push(item)
-              }
-              
-            // }
+        //Finding receipts from receipt_id
+        let receipt;
+        let isReceipts = item?.academics[i]?.fees[i]?.fees_receipt?.length > 0
+        if (isReceipts && !isNaN(receipt_params)) {
+          
+          if(
+            (item?.contact_info[0]?.whatsapp_no == receipt_params && isReceipts )
+          ){
+            student_receipts.push(item)
+            flag = true;
+                break;
           }
-          if(flag){
-            break;
+          
+          if(
+            (item.student_id == receipt_params && isReceipts )
+          ){
+            student_receipts.push(item)
+            flag = true;
+                break;
           }
+            for(var k=0; k<item.academics[i].fees[i].fees_receipt?.length; k++){
+            receipt = item.academics[i].fees[i].fees_receipt[k]
+            item.academics[i].fees[i].fees_receipt = []
+            
+            if (receipt.fees_receipt_id == receipt_params) {
+              item.academics[i].fees[i].fees_receipt.push(receipt)
+              student_receipts.push(item);
+                flag = true;
+                break;
+              }
+            }
+          
+        }
+        else if (isStudentNameFound && isReceipts){
+          student_receipts.push(item)
+        }
+
+        if(flag){
+          break;
+        }
       }
     });
 
     // Getting staff details for staff receipt
     let staff_data = await Staff.aggregate([
-      { $match: { is_cancelled: 0 } },
       {
         $lookup: {
           from: "basic_infos",
