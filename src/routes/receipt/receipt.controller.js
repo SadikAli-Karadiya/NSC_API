@@ -32,15 +32,15 @@ const generateReceiptFunction = async (
   try{
 
     const admin_details = await Admin.findById(admin_id);
-  
+
     const isMatch = admin_details.security_pin == security_pin;
-  
+
     if(!isMatch) {
-        return false;
+      return false;
     }
   
     const student_details = await Student.findOne({ student_id });
-  
+    
     const academic_details = await Academic.findOne({
       student_id: student_details._id,
       is_transferred: 0
@@ -56,12 +56,8 @@ const generateReceiptFunction = async (
       .populate({
         path: "class_id",
         select:
-          "-_id class_name medium stream batch_start_year is_active",
-        match: {
-          is_active: 1,
-        },
+          "-_id class_name medium stream batch_start_year is_active is_primary",
       })
-      .limit(1);
   
     const net_amount = amount - discount;
   
@@ -79,15 +75,35 @@ const generateReceiptFunction = async (
     const salary_receipts = await SalaryReceipt.find();
     const fees_receipt_id = fees_receipts.length + salary_receipts.length + 1 + 1000;
     
-    
-    let lastPaid = last_paid;
-    if(lastPaid == -1){
-      lastPaid = new Date(student_details.admission_date).getMonth() + 1;
-    }
-    
-    let toMonth = lastPaid == 12 
+    let fromMonth=0, toMonth=0;
+
+    if(academic_details.class_id.is_primary){
+      let lastPaid = last_paid;
+      if(lastPaid == -1){
+        lastPaid = new Date(student_details.admission_date).getMonth() + 1;
+      }
+      
+      fromMonth = last_paid == -1 // If first time payment
+                  ?
+                    lastPaid
+                  :
+                    lastPaid == 12
+                      ?
+                        lastPaid = 1
+                      : 
+                        lastPaid + 1
+  
+      toMonth = last_paid == -1 // If first time payment
+                ?
+                  ( ( lastPaid + Number(  ) ) - 1 ) % 12 == 0
+                  ?
+                    12
+                  :
+                    ( ( lastPaid + Number(total_months) ) - 1 ) % 12
+                :
+                  lastPaid == 12 // If last paid is upto 12 month
                   ? 
-                    total_months == 1
+                    total_months == 1 // If total_months is 1 then stay on 12 
                     ?
                       lastPaid
                     :
@@ -97,26 +113,18 @@ const generateReceiptFunction = async (
                     ?
                       1
                     :
-                      (lastPaid + Number(total_months)) % 12
+                      (lastPaid + Number(total_months)) % 12 
+
+    }
                       
     const fees_receipt_details = await FeesReceipt.create({
       fees_receipt_id,
       fees_id: academic_details.fees_id,
       admin_id: admin_details._id,
       transaction_id: transaction_details._id,
-      from_month: last_paid == -1
-                  ?
-                    lastPaid
-                  :
-                    lastPaid == 12
-                      ?
-                        lastPaid = 1
-                      : 
-                        lastPaid + 1,
+      from_month: fromMonth,
       to_month: toMonth,
-
-              
-      discount,
+      discount
     });
 
     //updating pending amount of student in fees table
@@ -124,7 +132,7 @@ const generateReceiptFunction = async (
       { _id: academic_details.fees_id },
       { 
         $inc: { pending_amount: -amount } ,
-        paid_upto: toMonth
+        paid_upto: academic_details.class_id.is_primary ? toMonth : -1
       }
     );
     
@@ -144,7 +152,6 @@ const generateReceiptFunction = async (
       admin : admin_details.username,
       studentID: student_id
     })
-  
   
     return fees_receipt_details;
   } catch(error){
@@ -250,7 +257,7 @@ async function updateStudentReceipt(req, res, next) {
       }
     );
 
-    const transaction_details = await Transaction.findByIdAndUpdate(
+    const old_transaction_details = await Transaction.findByIdAndUpdate(
       receipt_details.transaction_id,
       {
         is_by_cash,
@@ -265,7 +272,7 @@ async function updateStudentReceipt(req, res, next) {
 
     //updating pending amount of student in fees table
     const old_discount = receipt_details.discount;
-    const pending_amount = transaction_details.amount + old_discount - amount;
+    const pending_amount = (old_transaction_details.amount + old_discount) - amount;
 
     await Fees.findOneAndUpdate(
       { _id: receipt_details.fees_id },
@@ -275,7 +282,7 @@ async function updateStudentReceipt(req, res, next) {
       }
     );
 
-  if(transaction_details.is_by_cheque && is_by_cheque){
+  if(old_transaction_details.is_by_cheque && is_by_cheque){
     //updating notification
     await Notification.findOneAndUpdate({
       receipt_id : fees_receipt_id,
@@ -284,6 +291,9 @@ async function updateStudentReceipt(req, res, next) {
       cheque_date,
       is_deposited: 0
     })
+  }
+  if(old_transaction_details.is_by_cheque && !is_by_cheque){
+    await Notification.findOneAndDelete({ receipt_id : fees_receipt_id })
   }
   else if(is_by_cheque){
     await Notification.create({
@@ -316,7 +326,7 @@ async function searchReceipt(req, res, next) {
 
     // Getting student details for student receipt
     let student_data = await Student.aggregate([
-      { $match: { is_cancelled: 0 } },
+      // { $match: { is_cancelled: 0 } },
       {
         $lookup: {
           from: "basic_infos",
@@ -341,7 +351,6 @@ async function searchReceipt(req, res, next) {
           as: "academics",
           let: { class_id: "class_id" },
           pipeline: [
-            // { $match: {is_transferred: 0} },
             {
               $lookup: {
                 from: "classes",
@@ -398,66 +407,69 @@ async function searchReceipt(req, res, next) {
       },
     ]);
 
-      let flag = false;
-
-      student_data.map(function (item) {
+    let flag = false;
+    
+    student_data.map(function (item) {
+      const student_full_name = item?.basic_info[0]?.full_name?.toLowerCase();
+      let isStudentNameFound = false;
       for(var i=0; i<item.academics?.length && item.academics[i].class?.length > 0; i++){
-        const student_full_name = item?.basic_info[0]?.full_name?.toLowerCase();
-        let isStudentNameFound = false;
   
         if (isNaN(receipt_params)) {
           receipt_params = receipt_params.toLowerCase();
         } 
-  
+        
         if (student_full_name?.indexOf(receipt_params) > -1) {
           isStudentNameFound = true;
         }
-
-        if(isStudentNameFound){
-          
-        }
-
-        //Finding receipts from receipt_id
+        
         let receipt;
-        let isReceipts = item?.academics[i]?.fees[i]?.fees_receipt?.length > 0
-        if (isReceipts && !isNaN(receipt_params)) {
-          
+        let isReceipts = item?.academics[i]?.fees[0]?.fees_receipt?.length > 0
+        
+        // console.log(item?.academics[i], isReceipts)
+
+        if (!isNaN(receipt_params) && isReceipts) {
+          //if whatsapp no match then push all receipts
           if(
             (item?.contact_info[0]?.whatsapp_no == receipt_params && isReceipts )
           ){
             student_receipts.push(item)
-            flag = true;
-                break;
+            break;
           }
           
+          //if student id match then push all receipts
           if(
             (item.student_id == receipt_params && isReceipts )
           ){
             student_receipts.push(item)
-            flag = true;
-                break;
+            break;
           }
-            for(var k=0; k<item.academics[i].fees[i].fees_receipt?.length; k++){
-            receipt = item.academics[i].fees[i].fees_receipt[k]
-            item.academics[i].fees[i].fees_receipt = []
-            
+
+          //If above both condition fails then find particular receipt
+          for(var k=0; k < item.academics[i].fees[0].fees_receipt?.length; k++){
+            receipt = item.academics[i].fees[0].fees_receipt[k]
             if (receipt.fees_receipt_id == receipt_params) {
-              item.academics[i].fees[i].fees_receipt.push(receipt)
+              //keeping the found academics and removing others academics
+              item.academics.splice(i, i);
+              //emptying all receipts
+              item.academics[0].fees[0].fees_receipt = []
+              //Adding receipt which is matched
+              item.academics[0].fees[0].fees_receipt.push(receipt)
               student_receipts.push(item);
-                flag = true;
-                break;
-              }
+              flag = true;
+              break;
             }
-          
+          }
         }
-        else if (isStudentNameFound && isReceipts){
-          student_receipts.push(item)
+        else if (isStudentNameFound && isReceipts){ //If student name match, push all receipts
+          student_receipts.push(item);
+          break;
         }
 
         if(flag){
           break;
         }
       }
+      
     });
 
     // Getting staff details for staff receipt

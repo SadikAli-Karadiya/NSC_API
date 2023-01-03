@@ -124,11 +124,10 @@ async function registerFaculty(req, res) {
 // --------------  GAT ALL FACULTY ------------------------
 // --------------------------------------------------------
 async function getAllFaculty(req, res) {
-  staffs.find().populate("basic_info_id").populate("contact_info_id")
+  staffs.find().populate("basic_info_id").populate("contact_info_id").sort({joining_date: -1})
     .then(result => {
       res.status(200).json({
         staffData: result
-
       })
     })
     .catch(err => {

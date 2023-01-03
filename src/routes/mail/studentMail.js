@@ -27,7 +27,7 @@ const EmailSender = ({ email, full_name, studentID }) => {
         <div style="max-width: 700px; background-color: white; margin: 0 auto">
           <div style="width: 100%; background-color: #ADD8E6; padding: 20px 0">
           <a href="" ><img
-              src="https://res.cloudinary.com/doagkfdns/image/upload/v1666102288/Nasir/logo_vhv2gr.png"
+              src="https://ik.imagekit.io/44qikvq89/logo.png?ik-sdk-version=javascript-1.4.3&updatedAt=1672646698450"
               style="width: 100%; height: 70px; object-fit: contain"
             /></a> 
           

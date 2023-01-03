@@ -151,7 +151,7 @@ async function studentAllAcademicDetails(req, res, next) {
 
 async function transferFeesToStudent(req, res, next) {
   try {
-    const { payer_fees_id, payee_id, amount, admin_id, security_pin } =
+    const { payer_fees_id, payee_id, amount, admin_id, security_pin, payeeIsPrimary, NoOfMonths } =
       req.body;
     const is_by_cash = 1;
     const is_by_cheque = 0;
@@ -159,20 +159,33 @@ async function transferFeesToStudent(req, res, next) {
     const cheque_no = -1;
     const upi_no = "-1";
     const discount = 0;
+    const cheque_date = '';
+    const last_paid = req.body.last_paid;
+    let total_months = 0;
+
+    if(payeeIsPrimary){
+      total_months = NoOfMonths;
+    }
 
     //---------generating Student Receipt--------
     const result = await generateReceiptFunction(
-      payee_id,
-      is_by_cash,
-      is_by_cheque,
-      is_by_upi,
-      amount,
-      discount,
-      cheque_no,
-      upi_no,
-      admin_id,
-      security_pin
+      {
+        student_id: payee_id,
+        is_by_cash,
+        is_by_cheque,
+        is_by_upi,
+        amount,
+        discount,
+        cheque_no,
+        cheque_date,
+        upi_no,
+        admin_id,
+        last_paid,
+        total_months,
+        security_pin
+      }
     );
+    
 
     if (result == false) {
       return res.status(200).json({

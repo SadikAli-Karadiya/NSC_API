@@ -39,9 +39,9 @@ app.use("/mail", mailRouter);
 app.use("/notifications", notificationRouter);
 
 
-app.get("/*", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "client", "index.html"));
-});
+// app.get("/*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "..", "client", "index.html"));
+// });
 
 app.use((req, res, next) => {
   const err = new Error("Page Not Found");

@@ -278,7 +278,6 @@ async function getAllStudents(req, res) {
 
 }
 
-
 //----------------------------------------------------------------------
 //-- GETTING PARTICULAR STUDENT DETAILS BY ID, FULLNAME, WHATSAPP_NO ---
 //----------------------------------------------------------------------
@@ -333,8 +332,103 @@ async function getStudentDetails(req, res, next) {
         }).populate({
           path: "class_id",
           match: {
-            is_active: 1,
             is_primary: is_primary == 1 ? 1 : 0
+          },
+        });
+
+         if (academic_details.class_id == null) {
+           reject()
+          }
+        //Getting fees details
+        const fees_details = await Fees.findById(academic_details.fees_id);
+
+        students_detail.push({
+          personal: item,
+          academic: academic_details,
+          fees: fees_details,
+        });
+        i++;
+        if (data.length == i) {
+          resolve();
+        }
+      });
+    });
+
+    myPromise.then(() => {
+      res.status(200).json({
+        success: true,
+        data: {
+          students_detail,
+        },
+      });
+    },
+    ()=>{
+      return res.status(200).json({
+        success: false,
+        message: "No student found",
+      });
+    }
+    );
+  } catch (error) {
+    next(error);
+  }
+}
+
+//----------------------------------------------------------------------
+//-SEARCH STUDENT IN PRIMARY AND SECONDARY BY ID, FULLNAME, WHATSAPP_NO--
+//----------------------------------------------------------------------
+async function searchStudentInPrimarySecondary(req, res, next) {
+  try {
+    let student_params = req.params.id_name_whatsapp;
+    
+    let students_detail = [];
+
+    // Getting student basic info and contact info details
+    let data = await Student.find({is_cancelled:0})
+      .populate({
+        path: "basic_info_id",
+      })
+      .populate({
+        path: "contact_info_id",
+      });
+
+    data = data.filter(function (item) {
+      const full_name = item.basic_info_id.full_name.toLowerCase();
+      let isNameFound = false;
+
+      if (isNaN(student_params)) {
+        student_params = student_params.toLowerCase();
+      }
+
+      if (full_name.indexOf(student_params) > -1) {
+        isNameFound = true;
+      }
+
+      return (
+        item.student_id == student_params ||
+        isNameFound ||
+        item.contact_info_id.whatsapp_no == student_params
+      );
+    });
+
+    if (!data[0]) {
+      return res.status(200).json({
+        success: false,
+        message: "No student found",
+      });
+    }
+
+    let myPromise = new Promise(function (resolve, reject) {
+      var i = 0;
+      data.forEach(async (item) => {
+        //getting academic details
+        const academic_details = await Academic.findOne({
+          student_id: item._id,
+          is_transferred: 0
+        }).populate({
+          path: "class_id",
+          match: {
+            is_active: 1,
           },
         });
 
@@ -426,17 +520,17 @@ async function getStudentDetailsUniversal(req, res, next) {
         //getting academic details
         const academic_details = await Academic.findOne({
           student_id: item._id,
-          is_transferred: 0
         }).populate({
           path: "class_id",
           match: {
             is_primary: is_primary == 1 ? 1 : 0
           },
-        });
+        }).sort({date: -1});
 
-         if (academic_details.class_id == null) {
-           reject()
-          }
+        if (academic_details.class_id == null) {
+          reject()
+        }
+
         //Getting fees details
         const fees_details = await Fees.findById(academic_details.fees_id);
 
@@ -490,13 +584,10 @@ async function cancelStudentAdmission(req, res, next) {
     })
       .populate("fees_id", "")
       .populate({
-        path: "class_id",
-        match: {
-          is_active: 1,
-        },
+        path: "class_id"
       });
 
-      // await Fees.findByIdAndUpdate(academic_info.fees_id, {pending_amount: 0})
+    await Fees.findByIdAndUpdate(academic_info.fees_id, {pending_amount: 0})
 
     //START => Updating total student in class
     const class_info = await Classes.findById(academic_info.class_id);
@@ -732,10 +823,13 @@ async function transferStudentsToNewClass(req, res, next) {
         student_id: student_info._id,
         is_transferred: 0
       },{
-        is_transferred: 1
+        is_transferred: 1,
       })
-      .sort({ date: -1 })
-      .populate("fees_id");
+      .populate("fees_id")
+      .sort({ date: -1 });
+
+      //changing last academic year pending amount to zero, because if receipt is generated in last year will be add to current year instead of last year (bcoz current is is_transferred:0).
+      await Fees.findByIdAndUpdate(last_academic_detail.fees_id, {pending_amount: 0})
 
       const new_class_info = await Classes.findById(class_id);
 
@@ -782,8 +876,10 @@ async function deleteAndTransferStudentToNewClass(req, res, next) {
       });
     }
 
-    const student_info = await Student.findOne({
+    const student_info = await Student.findOneAndUpdate({
       student_id: student_id,
+    },{
+      is_cancelled: 0
     });
 
     const fees_details = await Fees.create({
@@ -801,21 +897,12 @@ async function deleteAndTransferStudentToNewClass(req, res, next) {
     ).sort({ date: -1 });
     
     if(!last_academic){ // if student cancelled his admission and came back
-      const new_class_info = await Classes.findById(class_id);
-
-      const net_fees = new_class_info.fees;
-
-      const fees = await Fees.create({
-        pending_amount: net_fees,
-        discount: 0,
-        net_fees,
-      });
 
       last_academic = await Academic.create({
         school_name: "",
-        student_id: student_id,
+        student_id: student_info._id,
         class_id: class_id,
-        fees_id: fees._id,
+        fees_id: fees_details._id,
         is_transferred: 0
       })
     }
@@ -847,5 +934,6 @@ module.exports = {
   cancelStudentAdmission,
   updateStudentDetails,
   transferStudentsToNewClass,
-  deleteAndTransferStudentToNewClass
+  deleteAndTransferStudentToNewClass,
+  searchStudentInPrimarySecondary
 };

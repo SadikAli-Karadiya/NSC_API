@@ -320,9 +320,12 @@ exports.displayStudentInClass = async (req, res, next) => {
       })
       .populate("fees_id");
 
-    if (!academicID[0]) {
+    if (academicID.length == 0) {
       return res.status(200).json({
         success: false,
+        data: {
+        classDetails: classID
+      },
         message: "Students not found",
       });
     }
