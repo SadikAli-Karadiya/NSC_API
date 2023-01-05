@@ -2,9 +2,11 @@ const Classes = require("../../models/classes");
 const Academic = require("../../models/academic");
 const Student = require("../../models/student");
 const Fees = require("../../models/fees");
+const FeesReceipt = require("../../models/feesReceipt");
 const BasicInfo = require("../../models/basicinfo");
+const ContactInfo = require("../../models/contactinfo");
+const Transactions = require("../../models/transaction");
 const Exceljs = require("Exceljs");
-const student = require("../../models/student");
 
 //---------------------------------------//
 //----------Create new classes-----------//
@@ -179,32 +181,36 @@ exports.deleteClass = async (req, res, next) => {
     }
 
     let updateValue = { $set: { is_active: -1 } };
-    classes = await Classes.findByIdAndUpdate(req.params.id, updateValue, {
+    await Classes.findByIdAndUpdate(req.params.id, updateValue, {
       new: true,
       runValidators: true,
       useFindAndModify: false,
     });
 
     const classID = await Classes.findById(req.params.id);
-    const academicID = await Academic.find({ class_id: classID })
-      .populate("student_id")
-      .populate("fees_id");
+    const academicIDs = await Academic.find({ class_id: classID })
 
-    academicID.forEach(async (element) => {
-      await Student.findByIdAndUpdate(
-        element.student_id._id,
-        { is_cancelled: 1 },
-        {
-          new: true,
-          runValidators: true,
-          useFindAndModify: false,
-        }
-      );
+    academicIDs.forEach(async (element) => {
+      //Deleting all academics and fees records of this deleted class 
+      const academic_detail = await Academic.findByIdAndDelete(element._id)
+
+      const studentAcademics = await Academic.find({student_id: academic_detail.student_id});
+
+      //If no other academic records of student found then delete student permanently
+      if(studentAcademics.length == 0){
+        const stud = await Student.findByIdAndDelete(academic_detail.student_id);
+        await BasicInfo.findByIdAndDelete(stud.basic_info_id)
+        await ContactInfo.findByIdAndDelete(stud.contact_info_id)
+      }
+
+      const fees_detail = await Fees.findByIdAndDelete(academic_detail.fees_id);
+      const receipt_detail = await FeesReceipt.findOneAndDelete({fees_id: fees_detail._id})
+      await Transactions.findByIdAndDelete(receipt_detail.transaction_id)
     });
 
     res.status(200).json({
       success: true,
-      message: "Delete successfully",
+      message: "Class deleted successfully",
     });
   } catch (error) {
     res.status(400).json({
