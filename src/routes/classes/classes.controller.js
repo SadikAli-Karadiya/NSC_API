@@ -15,6 +15,7 @@ exports.createNewClass = async (req, res, next) => {
   try {
     const {
       batch_start_year,
+      batch_duration,
       class_name,
       total_student,
       fees,
@@ -26,8 +27,9 @@ exports.createNewClass = async (req, res, next) => {
     } = req.body;
 
     const classes = await Classes.create({
-      batch_start_year,
       class_name,
+      batch_start_year,
+      batch_duration,
       total_student,
       fees,
       is_primary,
@@ -116,20 +118,16 @@ exports.displayClass = async (req, res, next) => {
       is_active: 1,
     });
 
-    if (!classes[0]) {
-      throw new Error("Classes not found");
-    }
-
     res.status(200).json({
       success: true,
       data: classes,
       message: "Display successfully",
     });
   } catch (error) {
-    // res.status(400).json({
-    //     success:false,
-    //     message:error.message
-    // })
+    res.status(400).json({
+        success:false,
+        message:error.message
+    })
   }
 };
 
@@ -491,9 +489,6 @@ exports.exportPendingStudentInClass = async (req, res, next) => {
 exports.studentSearchById_Name_Mobile = async (req, res, next) => {
   try {
     let student_params = req.params.id_name_whatsapp;
-    let student_details;
-    let academic_details;
-    let fees_details;
 
     // Getting student basic info and contact info details
     let data = await Student.find({ is_cancelled: 0 })

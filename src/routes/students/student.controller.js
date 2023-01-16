@@ -336,18 +336,18 @@ async function getStudentDetails(req, res, next) {
           },
         });
 
-         if (academic_details.class_id == null) {
-           reject()
+         if (academic_details.class_id != null) {
+           const fees_details = await Fees.findById(academic_details.fees_id);
+   
+           students_detail.push({
+             personal: item,
+             academic: academic_details,
+             fees: fees_details,
+           });
           }
-        //Getting fees details
-        const fees_details = await Fees.findById(academic_details.fees_id);
 
-        students_detail.push({
-          personal: item,
-          academic: academic_details,
-          fees: fees_details,
-        });
-        i++;
+          i++;
+        //Getting fees details
         if (data.length == i) {
           resolve();
         }
@@ -432,17 +432,16 @@ async function searchStudentInPrimarySecondary(req, res, next) {
           },
         });
 
-         if (academic_details.class_id == null) {
-           reject()
+         if (academic_details.class_id != null) {
+           const fees_details = await Fees.findById(academic_details.fees_id);
+   
+           students_detail.push({
+             personal: item,
+             academic: academic_details,
+             fees: fees_details,
+           });
           }
         //Getting fees details
-        const fees_details = await Fees.findById(academic_details.fees_id);
-
-        students_detail.push({
-          personal: item,
-          academic: academic_details,
-          fees: fees_details,
-        });
         i++;
         if (data.length == i) {
           resolve();
@@ -527,18 +526,16 @@ async function getStudentDetailsUniversal(req, res, next) {
           },
         }).sort({date: -1});
 
-        if (academic_details.class_id == null) {
-          reject()
+        if (academic_details.class_id != null) {
+          const fees_details = await Fees.findById(academic_details.fees_id);
+  
+          students_detail.push({
+            personal: item,
+            academic: academic_details,
+            fees: fees_details,
+          });
         }
-
-        //Getting fees details
-        const fees_details = await Fees.findById(academic_details.fees_id);
-
-        students_detail.push({
-          personal: item,
-          academic: academic_details,
-          fees: fees_details,
-        });
+        
         i++;
         if (data.length == i) {
           resolve();

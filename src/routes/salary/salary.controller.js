@@ -27,7 +27,7 @@ function allSalary(req, res) {
 // ---------------------------------------------------
 async function salaryFaculty(req, res) {
     try {
-        const { is_by_cheque, is_by_cash, is_by_upi, cheque_no, cheque_date, upi_no, amount, is_hourly, total_hours, rate_per_hour, total_amount, staff_id, admin } = req.body
+        const { is_by_cheque, is_by_cash, is_by_upi, cheque_no, cheque_date, upi_no, amount, is_hourly, total_hours, rate_per_hour, total_amount, staff_id, admin, date } = req.body
         
         const admin_details = await Admin.findOne({ username: admin })
         
@@ -47,12 +47,12 @@ async function salaryFaculty(req, res) {
         });
 
         const salaryreceipt = await salary_receipt.create({
-            salary_receipt_id: salaryreceipt_id,
-            staff_id: staff_id,
-            admin_id: admin_details,
-            transaction_id: Salary,
-            is_hourly: is_hourly
-
+          salary_receipt_id: salaryreceipt_id,
+          staff_id: staff_id,
+          admin_id: admin_details,
+          transaction_id: Salary,
+          is_hourly: is_hourly,
+          date: date
         })
 
         let hourlysalary
@@ -153,6 +153,7 @@ async function updateStaffReceipt(req, res, next) {
       upi_no,
       amount,
       admin_id,
+      date
     } = req.body;
 
     const salary_receipt_details = await salary_receipt.findOneAndUpdate(
@@ -161,7 +162,7 @@ async function updateStaffReceipt(req, res, next) {
         admin_id,
         is_hourly,
         is_edited: 1,
-        date: Date.now(),
+        date,
       }
     );
 
@@ -211,7 +212,7 @@ async function updateStaffReceipt(req, res, next) {
         cheque_date: cheque_date ? cheque_date : '',
         upi_no: upi_no ? upi_no : "",
         amount,
-        date: Date.now(),
+        date: date,
       }
     );
 

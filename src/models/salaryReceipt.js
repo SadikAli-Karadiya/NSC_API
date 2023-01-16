@@ -30,6 +30,10 @@ const salaryReceipt = new mongoose.Schema({
         type: Number,
         default: 0
     },
+    is_deleted:{
+        type: Number,
+        default: 0
+    },
     date:{
         type: Date,
         default: Date.now,

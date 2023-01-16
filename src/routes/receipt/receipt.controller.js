@@ -26,7 +26,8 @@ const generateReceiptFunction = async (
     admin_id,
     last_paid,
     total_months,
-    security_pin
+    security_pin,
+    date
   }
 ) => {
   try{
@@ -95,7 +96,7 @@ const generateReceiptFunction = async (
   
       toMonth = last_paid == -1 // If first time payment
                 ?
-                  ( ( lastPaid + Number(  ) ) - 1 ) % 12 == 0
+                  ( ( lastPaid + Number(total_months) ) - 1 ) % 12 == 0
                   ?
                     12
                   :
@@ -124,7 +125,8 @@ const generateReceiptFunction = async (
       transaction_id: transaction_details._id,
       from_month: fromMonth,
       to_month: toMonth,
-      discount
+      discount,
+      date
     });
 
     //updating pending amount of student in fees table
@@ -150,7 +152,8 @@ const generateReceiptFunction = async (
       full_name : academic_details.student_id.basic_info_id.full_name,
       amount : net_amount, 
       admin : admin_details.username,
-      studentID: student_id
+      studentID: student_id,
+      date
     })
   
     return fees_receipt_details;
@@ -210,6 +213,7 @@ async function updateStudentReceipt(req, res, next) {
       admin_id,
       last_paid,
       total_months,
+      date
     } = req.body;
 
     const admin_details = await Admin.findById(admin_id);
@@ -253,7 +257,7 @@ async function updateStudentReceipt(req, res, next) {
         is_edited: 1,
         from_month: lastPaid,
         to_month: toMonth,
-        date: Date.now(),
+        date: date,
       }
     );
 
@@ -267,6 +271,7 @@ async function updateStudentReceipt(req, res, next) {
         cheque_date: cheque_date ? cheque_date : '',
         upi_no: upi_no ? upi_no : "",
         amount: net_amount,
+        date
       }
     );
 
@@ -312,6 +317,60 @@ async function updateStudentReceipt(req, res, next) {
   } catch (error) {
     next(error);
   }
+}
+
+//-------------------------------------------------------------
+//-------------------- DELETE STUDENT RECEIPT -------------------
+//-------------------------------------------------------------
+async function deleteStudentReceipt(req, res, next) {
+  try {
+    const fees_receipt_id = req.params.fees_receipt_id;
+
+    const admin_details = await Admin.findById(admin_id);
+
+    const isMatch = security_pin == admin_details.security_pin;
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Please enter valid PIN",
+      });
+    }
+
+    const deletedReceipt = await FeesReceipt.findOneAndUpdate({ fees_receipt_id },{is_deleted: -1});
+
+    //getting amount from transaction table
+    const deletedTransaction = await Transaction.findById(deletedReceipt.transaction_id);
+
+    //updating fees table of student
+    if(deletedReceipt.from_month != 0 && deletedReceipt.to_month != 0){
+      // await Fees.findByIdAndUpdate(
+      //   deletedReceipt.fees_id, 
+      //   {
+      //     $inc: {pending_amount: deletedTransaction.amount
+      //     },
+      //     paid_upto: 
+      // })
+    }
+    else{
+      await Fees.findByIdAndUpdate(
+        deletedReceipt.fees_id, 
+        {
+          $inc: {pending_amount: deletedTransaction.amount,
+          
+        }
+      })
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Receipt Deleted successfully",
+    });
+
+  }catch (error) {
+    next(error);
+  }
+
 }
 
 //-----------------------------------------------------------------------------------
@@ -590,6 +649,7 @@ async function searchReceipt(req, res, next) {
 module.exports = {
   generateStudentReceipt,
   updateStudentReceipt,
+  deleteStudentReceipt,
   searchReceipt,
   generateReceiptFunction,
 };
