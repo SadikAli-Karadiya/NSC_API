@@ -22,12 +22,12 @@ const feesReceipt = new mongoose.Schema({
         required: true,
     },
     from_month:{
-        type: Number,
-        default: 0
+        type: String,
+        default: "0"
     },
     to_month:{
-        type: Number,
-        default: 0
+        type: String,
+        default: "0"
     },
     discount:{
         type: Number,

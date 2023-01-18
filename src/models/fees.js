@@ -14,8 +14,8 @@ const fees = new mongoose.Schema({
         required: [true, 'Pending amount is required']
     },
     paid_upto:{
-        type: Number,
-        default: -1
+        type: String,
+        default: "-1"
     },
     date:{
         type: Date,

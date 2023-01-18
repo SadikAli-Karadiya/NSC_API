@@ -76,45 +76,50 @@ const generateReceiptFunction = async (
     const salary_receipts = await SalaryReceipt.find();
     const fees_receipt_id = fees_receipts.length + salary_receipts.length + 1 + 1000;
     
-    let fromMonth=0, toMonth=0;
+    let fromMonth="0", toMonth="0";
 
     if(academic_details.class_id.is_primary){
       let lastPaid = last_paid;
+
       if(lastPaid == -1){
-        lastPaid = new Date(student_details.admission_date).getMonth() + 1;
+        lastPaid = new Date(academic_details.date).getMonth() + 1;
       }
-      
+    
       fromMonth = last_paid == -1 // If first time payment
                   ?
-                    lastPaid
+                    `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
                   :
                     lastPaid == 12
                       ?
                         lastPaid = 1
                       : 
-                        lastPaid + 1
+                        `${lastPaid + 1}` + " " + `${new Date(date).getFullYear()}`
   
       toMonth = last_paid == -1 // If first time payment
                 ?
                   ( ( lastPaid + Number(total_months) ) - 1 ) % 12 == 0
                   ?
-                    12
+                    `12 ${new Date(date).getFullYear()}`
                   :
-                    ( ( lastPaid + Number(total_months) ) - 1 ) % 12
+                    ( ( lastPaid + Number(total_months) ) - 1 ) > 12
+                    ?
+                      `${( ( lastPaid + Number(total_months) ) - 1 ) % 12}` + " " + `${new Date(date).getFullYear() + 1}`
+                    :
+                      `${( ( lastPaid + Number(total_months) ) - 1 ) % 12}` + " " + `${new Date(date).getFullYear()}`
                 :
                   lastPaid == 12 // If last paid is upto 12 month
                   ? 
                     total_months == 1 // If total_months is 1 then stay on 12 
                     ?
-                      lastPaid
+                      `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
                     :
-                      Number(total_months) - 1 
+                      `${Number(total_months) - 1}` + " " + `${new Date(date).getFullYear() + 1}`
                   : 
                     (lastPaid + Number(total_months)) % 12 == 0
                     ?
-                      1
+                      `${1}` + " " + `${new Date(date).getFullYear() + 1}`
                     :
-                      (lastPaid + Number(total_months)) % 12 
+                      `${(lastPaid + Number(total_months)) % 12}` + " " + `${new Date(date).getFullYear()}`
 
     }
                       
@@ -158,7 +163,6 @@ const generateReceiptFunction = async (
   
     return fees_receipt_details;
   } catch(error){
-    console.log(error)
     return {error: error.message}
   }
 };
@@ -236,19 +240,24 @@ async function updateStudentReceipt(req, res, next) {
                   ? 
                     total_months == 1
                     ?
-                      lastPaid
+                      `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
                     :
-                      total_months - 1 
+                      `${total_months - 1}` + " " + `${new Date(date).getFullYear() + 1}`
                   : 
                     total_months == 1
                     ?
-                     lastPaid
+                      `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
                     :
                       (lastPaid + (total_months - 1)) % 12 == 0
                       ?
-                        1
+                        `1 ${new Date(date).getFullYear() + 1}`
                       :
-                        (lastPaid + (total_months - 1)) % 12
+                        (lastPaid + (total_months - 1)) > 12
+                        ?
+                           `${(lastPaid + (total_months - 1)) % 12}` + " " + `${new Date(date).getFullYear() + 1}`
+                        :
+                          `${(lastPaid + (total_months - 1)) % 12}` + " " + `${new Date(date).getFullYear()}`
+                        
 
     const receipt_details = await FeesReceipt.findOneAndUpdate(
       { fees_receipt_id },
@@ -256,7 +265,7 @@ async function updateStudentReceipt(req, res, next) {
         admin_id: admin_details._id,
         discount,
         is_edited: 1,
-        from_month: lastPaid,
+        from_month: `${lastPaid}` + " " + `${new Date(date).getFullYear()}`,
         to_month: toMonth,
         date: date,
       }
@@ -484,8 +493,6 @@ async function searchReceipt(req, res, next) {
         
         let receipt;
         let isReceipts = item?.academics[i]?.fees[0]?.fees_receipt?.length > 0
-        
-        // console.log(item?.academics[i], isReceipts)
 
         if (!isNaN(receipt_params) && isReceipts) {
           //if whatsapp no match then push all receipts
