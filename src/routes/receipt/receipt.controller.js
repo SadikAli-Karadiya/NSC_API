@@ -158,6 +158,7 @@ const generateReceiptFunction = async (
   
     return fees_receipt_details;
   } catch(error){
+    console.log(error)
     return {error: error.message}
   }
 };
@@ -166,7 +167,7 @@ async function generateStudentReceipt(req, res, next) {
   try {
 
     const fees_receipt_details = await generateReceiptFunction(req.body);
-    
+
     if (fees_receipt_details == false) {
       return res.status(200).json({
         success: false,
@@ -176,7 +177,7 @@ async function generateStudentReceipt(req, res, next) {
     else if(fees_receipt_details.error){
       return res.status(200).json({
         success: false,
-        message: fees_receipt_details.error.message,
+        message: fees_receipt_details.error,
       });
     }
     else {

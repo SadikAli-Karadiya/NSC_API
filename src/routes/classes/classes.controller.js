@@ -146,15 +146,29 @@ exports.updateClass = async (req, res, next) => {
     }
 
     classes = await Classes.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+      new: false,
       runValidators: true,
       useFindAndModify: false,
     });
 
+    const feesDiff = req.body.fees - classes.fees
+
+    //updating student net fees
+    const allAcademics = await Academic.find({ class_id: classes._id })
+
+    allAcademics.map( async (academic) =>{
+      await Fees.findByIdAndUpdate(
+        academic.fees_id, 
+        {
+          $inc: { net_fees: feesDiff, pending_amount: feesDiff }
+        }
+      )
+    })
+
     res.status(200).json({
       success: true,
       data: classes,
-      message: "Update successfully",
+      message: "Updated successfully",
     });
   } catch (error) {
     res.status(400).json({

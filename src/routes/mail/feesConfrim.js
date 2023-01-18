@@ -21,7 +21,7 @@ const Email = (options) => {
 const FeesSender = ({ email, full_name, amount, admin, studentID, date }) => {
 
   let receipDate = new Date(date)
-  receipDate = `${receipDate.getreceipDate() < 10 ? "0" + receipDate.getreceipDate() : receipDate.getreceipDate()}-${receipDate.getMonth() + 1 < 10 ? "0" + (receipDate.getMonth() + 1) : receipDate.getMonth() + 1}-${receipDate.getFullYear()}`;
+  receipDate = `${receipDate.getDate() < 10 ? "0" + receipDate.getDate() : receipDate.getDate()}-${receipDate.getMonth() + 1 < 10 ? "0" + (receipDate.getMonth() + 1) : receipDate.getMonth() + 1}-${receipDate.getFullYear()}`;
 
   const options = {
     from: `Nasir Sir Classes 👨‍🏫 <${USER}>`,
