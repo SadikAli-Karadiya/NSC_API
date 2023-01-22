@@ -170,10 +170,9 @@ async function registerStudent(req, res, next) {
         });
   
         //START => Updating total student in class
-        const class_info = await Classes.findById(class_id);
   
-        await Classes.findByIdAndUpdate(class_id, {
-          total_student: class_info.total_student + 1,
+        const class_info = await Classes.findByIdAndUpdate(class_id, {
+          $inc: { total_student: 1 },
         });
         // END
   
@@ -185,7 +184,7 @@ async function registerStudent(req, res, next) {
           date: admission_date
         });
   
-        EmailSender({email, full_name, studentID: studentId});
+        EmailSender({email, full_name, studentID: studentId, net_fees, class_name: class_info.class_name});
         res.status(201).json({
           //201 = Created successfully
           success: true,
@@ -411,7 +410,8 @@ async function searchStudentInPrimarySecondary(req, res, next) {
       );
     });
 
-    if (!data[0]) {
+
+    if (data.length == 0) {
       return res.status(200).json({
         success: false,
         message: "No student found",
@@ -426,10 +426,7 @@ async function searchStudentInPrimarySecondary(req, res, next) {
           student_id: item._id,
           is_transferred: 0
         }).populate({
-          path: "class_id",
-          match: {
-            is_active: 1,
-          },
+          path: "class_id"
         });
 
          if (academic_details.class_id != null) {

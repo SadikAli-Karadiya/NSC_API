@@ -10,7 +10,6 @@ async function startDatabase(){
     })
     .catch((err) => {
       console.log("Something went wrong, can't connect to database");
-      console.log(err);
       return false;
     });
 }

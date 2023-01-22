@@ -278,6 +278,7 @@ exports.transferClasses = async (req, res, next) => {
       await Classes.create({
         batch_start_year: element.batch_start_year + 1,
         class_name: element.class_name,
+        batch_duration: element.batch_duration,
         total_student: 0,
         fees: element.fees,
         is_primary: element.is_primary,

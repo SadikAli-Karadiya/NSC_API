@@ -151,7 +151,7 @@ async function studentAllAcademicDetails(req, res, next) {
 
 async function transferFeesToStudent(req, res, next) {
   try {
-    const { payer_fees_id, payee_id, amount, admin_id, security_pin, payeeIsPrimary, NoOfMonths } =
+    const { payer_fees_id, payee_id, amount, admin_id, security_pin, payeeIsPrimary, NoOfMonths, last_paid, payer_last_paid, payer_net_fees, payer_batch_duration } =
       req.body;
     const is_by_cash = 1;
     const is_by_cheque = 0;
@@ -160,7 +160,6 @@ async function transferFeesToStudent(req, res, next) {
     const upi_no = "-1";
     const discount = 0;
     const cheque_date = '';
-    const last_paid = req.body.last_paid;
     let total_months = 0;
 
     if(payeeIsPrimary){
@@ -182,7 +181,8 @@ async function transferFeesToStudent(req, res, next) {
         admin_id,
         last_paid,
         total_months,
-        security_pin
+        security_pin,
+        date: new Date()
       }
     );
     
@@ -201,13 +201,36 @@ async function transferFeesToStudent(req, res, next) {
     }
 
     //-------Deduct amount from payers fees-----
+    let oldPaidUptoDate = new Date(`${payer_last_paid.split(" ")[0]}-1-${payer_last_paid.split(" ")[1]}`);
+
+    const payers_months = 
+            amount/Math.floor((payer_net_fees/payer_batch_duration)) > 1
+            ?
+              Math.ceil(amount/Math.floor((payer_net_fees/payer_batch_duration)) > 1)
+            :
+              Math.floor(amount/Math.floor((payer_net_fees/payer_batch_duration)) > 1)
+
+    oldPaidUptoDate.setMonth(oldPaidUptoDate.getMonth() - payers_months);
+
     const fees_details = await Fees.findByIdAndUpdate(
       payer_fees_id,
       {
         $inc: { pending_amount: amount },
+        paid_upto: `${oldPaidUptoDate.getMonth() + 1} ${oldPaidUptoDate.getFullYear()}`
       },
       { returnOriginal: false, new: true }
     );
+    
+    //If all fees is transfered then paid_upto will be -1
+    if(fees_details.net_fees == fees_details.pending_amount){
+      await Fees.findByIdAndUpdate(
+        payer_fees_id,
+        {
+          paid_upto: "-1"
+        },
+        { returnOriginal: false, new: true }
+      );
+    }
 
     res.status(200).json({
       success: true,
@@ -231,9 +254,10 @@ async function studentFeesHistory(req, res, next) {
 
     const fees_details = await Fees.findById(academic_details.fees_id);
 
-    const all_receipts = await FeesReceipt.find({ fees_id: fees_details._id })
+    const all_receipts = await FeesReceipt.find({ fees_id: fees_details._id, is_deleted: 0 })
       .populate("admin_id")
-      .populate("transaction_id");
+      .populate("transaction_id")
+      .sort({date: -1, fees_receipt_id: -1});
 
     res.status(200).json({
       success: true,

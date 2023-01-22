@@ -18,7 +18,7 @@ const Email = (options) => {
   });
 };
 // send email
-const PendingSender = ({ email, full_name, studentID }) => {
+const PendingSender = ({ email, full_name, studentID, net_fees, class_name }) => {
   const options = {
     from: `Nasir Sir Classes 👨‍🏫 <${USER}>`,
     to: `${email}`,
@@ -38,8 +38,10 @@ const PendingSender = ({ email, full_name, studentID }) => {
                     Please Pay your Fees
             </p>
             <div style="font-size: .8rem; margin: 0 30px">
-            <h2> Student ID : ${studentID} </h2>
-            <h2> Hello, ${full_name.toUpperCase()} </h2>
+            <h3> Student ID : ${studentID} </h3>
+            <h3> class : ${class_name.toUpperCase()} </h3>
+            <h3> Total Fees : ${net_fees} </h3>
+            <h3> Hello, ${full_name.toUpperCase()} </h3>
             <p>We hope you're doing well. Kindly note that your Fees is pending. We are a little concerned that we haven't received payment from you yet. If you have any questions or concerns, please don't hesitate to contact us .</p>
            
              <p style="font-weight:800">Thank You   </p>

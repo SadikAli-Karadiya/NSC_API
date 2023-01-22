@@ -9,7 +9,7 @@ const Admin = require("../../models/admin")
 //-------------- ALL SALARY RECIEPT ------------------
 // ---------------------------------------------------
 function allSalary(req, res) {
-    salary_receipt.find()
+    salary_receipt.find({is_deleted: 0})
         .then(result => {
             res.status(200).json({
                 recieptdata: result
@@ -91,13 +91,14 @@ async function getFacultyhistory(req, res) {
     try {
 
         let staff_History;
-        staff_History = await salary_receipt.find({ staff_id: req.params.id, is_cancelled: 0 }).populate("admin_id").populate("transaction_id").populate("staff_id")
+        staff_History = await salary_receipt.find({ staff_id: req.params.id, is_deleted: 0 }).populate("admin_id")
+        .populate("transaction_id")
+        .populate("staff_id")
+        .sort({date: -1, salary_receipt_id: -1})
 
         res.status(200).json({
-            success: true,
-
-            staff_History
-
+          success: true,
+          staff_History
         });
     } catch (error) {
         return res.status(500).send(error.stack);
@@ -112,7 +113,7 @@ async function getsalary(req, res) {
         let hourlysalary;
         let monthlysalary;
         let staff_details;
-        const getdetails = await salary_receipt.findOne({ salary_receipt_id: req.params.salary_receipt_id })
+        const getdetails = await salary_receipt.findOne({ salary_receipt_id: req.params.salary_receipt_id, is_deleted: 0 })
             .populate("transaction_id")
             .populate({ path: "staff_id", populate: ["basic_info_id", "contact_info_id"] })
             .populate({ path: "admin_id", populate: ["staff_id"] })
@@ -226,10 +227,29 @@ async function updateStaffReceipt(req, res, next) {
   }
 }
 
+// ---------------------------------------------------
+//----------- DELETE SALARY RECIEPT ------------------
+// ---------------------------------------------------
+async function deleteStaffReceipt(req, res, next) {
+  try {
+    const salary_receipt_id = req.params.salary_receipt_id;
+
+    await salary_receipt.findOneAndUpdate({ salary_receipt_id }, { is_deleted: 1 });
+
+    res.status(200).json({
+      success: true,
+      message: "Receipt deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
     salaryFaculty,
     allSalary,
     getsalary,
     updateStaffReceipt,
+    deleteStaffReceipt,
     getFacultyhistory,
 };

@@ -55,6 +55,9 @@ const generateReceiptFunction = async (
         ],
       })
       .populate({
+        path: "fees_id"
+      })
+      .populate({
         path: "class_id",
         select:
           "-_id class_name medium stream batch_start_year is_active is_primary",
@@ -77,69 +80,77 @@ const generateReceiptFunction = async (
     const fees_receipt_id = fees_receipts.length + salary_receipts.length + 1 + 1000;
     
     let fromMonth="0", toMonth="0";
+    let lastPaidYear = 0;
 
+    
     if(academic_details.class_id.is_primary){
-      let lastPaid = last_paid;
+      if(last_paid == '-1'){
+        lastPaidYear = new Date(date).getFullYear()
+      }
+      else{
+        lastPaidYear = Number(last_paid.split(" ")[1])
+      }
+
+      let lastPaid = Number(last_paid.split(" ")[0]);
 
       if(lastPaid == -1){
         lastPaid = new Date(academic_details.date).getMonth() + 1;
       }
     
-      fromMonth = last_paid == -1 // If first time payment
+      fromMonth = Number(last_paid.split(" ")[0]) == -1 // If first time payment
                   ?
-                    `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
+                    `${lastPaid}` + " " + `${lastPaidYear}`
                   :
                     lastPaid == 12
                       ?
-                        lastPaid = 1
+                        `1 ${lastPaidYear + 1}`
                       : 
-                        `${lastPaid + 1}` + " " + `${new Date(date).getFullYear()}`
+                        `${lastPaid + 1}` + " " + `${lastPaidYear}`
   
-      toMonth = last_paid == -1 // If first time payment
+      toMonth = Number(last_paid.split(" ")[0]) == -1 // If first time payment
                 ?
                   ( ( lastPaid + Number(total_months) ) - 1 ) % 12 == 0
                   ?
-                    `12 ${new Date(date).getFullYear()}`
+                    `12 ${lastPaidYear}`
                   :
                     ( ( lastPaid + Number(total_months) ) - 1 ) > 12
                     ?
-                      `${( ( lastPaid + Number(total_months) ) - 1 ) % 12}` + " " + `${new Date(date).getFullYear() + 1}`
+                      `${( ( lastPaid + Number(total_months) ) - 1 ) % 12}` + " " + `${lastPaidYear + 1}`
                     :
-                      `${( ( lastPaid + Number(total_months) ) - 1 ) % 12}` + " " + `${new Date(date).getFullYear()}`
+                      `${( ( lastPaid + Number(total_months) ) - 1 ) % 12}` + " " + `${lastPaidYear}`
                 :
                   lastPaid == 12 // If last paid is upto 12 month
                   ? 
-                    total_months == 1 // If total_months is 1 then stay on 12 
-                    ?
-                      `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
-                    :
-                      `${Number(total_months) - 1}` + " " + `${new Date(date).getFullYear() + 1}`
+                    `${(lastPaid + Number(total_months)) % 12}` + " " + `${lastPaidYear + 1}`
                   : 
-                    (lastPaid + Number(total_months)) % 12 == 0
+                    lastPaid + Number(total_months) > 12
                     ?
-                      `${1}` + " " + `${new Date(date).getFullYear() + 1}`
+                      `${(lastPaid + Number(total_months)) % 12}` + " " + `${lastPaidYear + 1}`
                     :
-                      `${(lastPaid + Number(total_months)) % 12}` + " " + `${new Date(date).getFullYear()}`
-
+                      (lastPaid + Number(total_months)) % 12 == 0
+                      ?
+                        `12 ${lastPaidYear}`
+                      :
+                        `${(lastPaid + Number(total_months)) % 12}` + " " + `${lastPaidYear}`
     }
                       
     const fees_receipt_details = await FeesReceipt.create({
       fees_receipt_id,
-      fees_id: academic_details.fees_id,
+      fees_id: academic_details.fees_id._id,
       admin_id: admin_details._id,
       transaction_id: transaction_details._id,
       from_month: fromMonth,
       to_month: toMonth,
       discount,
       date
-    });
+    })
 
     //updating pending amount of student in fees table
     await Fees.findOneAndUpdate(
-      { _id: academic_details.fees_id },
+      { _id: academic_details.fees_id._id },
       { 
         $inc: { pending_amount: -amount } ,
-        paid_upto: academic_details.class_id.is_primary ? toMonth : -1
+        paid_upto: academic_details.class_id.is_primary ? toMonth : "-1"
       }
     );
     
@@ -158,6 +169,8 @@ const generateReceiptFunction = async (
       amount : net_amount, 
       admin : admin_details.username,
       studentID: student_id,
+      net_fees: academic_details.fees_id.net_fees,
+      class_name: academic_details.class_id.class_name,
       date
     })
   
@@ -234,29 +247,30 @@ async function updateStudentReceipt(req, res, next) {
 
     const net_amount = amount - discount;
 
-    let lastPaid = Number(last_paid)
-   
+    const lastPaidYear = Number(last_paid.split(" ")[1])
+    let lastPaid = Number(last_paid.split(" ")[0])
+
     let toMonth = lastPaid == 12 
                   ? 
                     total_months == 1
                     ?
-                      `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
+                      `12 ${lastPaidYear}`
                     :
-                      `${total_months - 1}` + " " + `${new Date(date).getFullYear() + 1}`
-                  : 
+                      `${(lastPaid + (total_months - 1)) % 12}` + " " + `${lastPaidYear + 1}`
+                  :  
                     total_months == 1
                     ?
-                      `${lastPaid}` + " " + `${new Date(date).getFullYear()}`
+                      `${lastPaid}` + " " + `${lastPaidYear}`
                     :
                       (lastPaid + (total_months - 1)) % 12 == 0
                       ?
-                        `1 ${new Date(date).getFullYear() + 1}`
+                        `12 ${lastPaidYear}`
                       :
                         (lastPaid + (total_months - 1)) > 12
                         ?
-                           `${(lastPaid + (total_months - 1)) % 12}` + " " + `${new Date(date).getFullYear() + 1}`
+                           `${(lastPaid + (total_months - 1)) % 12}` + " " + `${lastPaidYear + 1}`
                         :
-                          `${(lastPaid + (total_months - 1)) % 12}` + " " + `${new Date(date).getFullYear()}`
+                          `${(lastPaid + (total_months - 1)) % 12}` + " " + `${lastPaidYear}`
                         
 
     const receipt_details = await FeesReceipt.findOneAndUpdate(
@@ -265,7 +279,7 @@ async function updateStudentReceipt(req, res, next) {
         admin_id: admin_details._id,
         discount,
         is_edited: 1,
-        from_month: `${lastPaid}` + " " + `${new Date(date).getFullYear()}`,
+        from_month: `${lastPaid}` + " " + `${lastPaidYear}`,
         to_month: toMonth,
         date: date,
       }
@@ -336,38 +350,58 @@ async function deleteStudentReceipt(req, res, next) {
   try {
     const fees_receipt_id = req.params.fees_receipt_id;
 
-    const admin_details = await Admin.findById(admin_id);
-
-    const isMatch = security_pin == admin_details.security_pin;
-
-    if (!isMatch) {
-      return res.status(400).json({
-        success: false,
-        message: "Please enter valid PIN",
-      });
-    }
-
-    const deletedReceipt = await FeesReceipt.findOneAndUpdate({ fees_receipt_id },{is_deleted: -1});
+    const deletedReceipt = await FeesReceipt.findOneAndUpdate({ fees_receipt_id },{is_deleted: 1});
 
     //getting amount from transaction table
     const deletedTransaction = await Transaction.findById(deletedReceipt.transaction_id);
+    const total_amount = deletedReceipt.discount + deletedTransaction.amount
 
     //updating fees table of student
-    if(deletedReceipt.from_month != 0 && deletedReceipt.to_month != 0){
-      // await Fees.findByIdAndUpdate(
-      //   deletedReceipt.fees_id, 
-      //   {
-      //     $inc: {pending_amount: deletedTransaction.amount
-      //     },
-      //     paid_upto: 
-      // })
+    if(deletedReceipt.from_month != "0" && deletedReceipt.to_month != "0"){
+
+      //Calculating month different between two dates
+      const fromDate = new Date(`${deletedReceipt.from_month.split(" ")[0]}-1-${deletedReceipt.from_month.split(" ")[1]}`)
+      const toDate = new Date(`${deletedReceipt.to_month.split(" ")[0]}-1-${deletedReceipt.to_month.split(" ")[1]}`)
+
+      const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+      const utc1 = Date.UTC(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate());
+          const utc2 = Date.UTC(toDate.getFullYear(), toDate.getMonth(), toDate.getDate());
+
+      const totalMonths = Math.round((Math.floor((utc2 - utc1) / _MS_PER_DAY))/30) + 1;
+      //----------------------------------------------
+
+      //Subtracting totalMonths from paid_upto date
+      const oldFeesDetails = await Fees.findByIdAndUpdate(deletedReceipt.fees_id)
+      const oldPaidUptoDate = new Date(`${oldFeesDetails.paid_upto.split(" ")[0]}-1-${oldFeesDetails.paid_upto.split(" ")[1]}`);
+      let newPaidUptoDate = new Date(oldPaidUptoDate.setMonth(oldPaidUptoDate.getMonth() - totalMonths));
+      //-------------------------------------------
+
+      const fees_details = await Fees.findByIdAndUpdate(
+        deletedReceipt.fees_id, 
+        {
+          $inc: {pending_amount: total_amount},
+          paid_upto: `${newPaidUptoDate.getMonth() + 1} ${newPaidUptoDate.getFullYear()}`
+        },
+        {
+          new: true
+        }
+      )
+
+      if(fees_details.net_fees == fees_details.pending_amount){
+        await Fees.findByIdAndUpdate(
+          deletedReceipt.fees_id, 
+          {
+            paid_upto: "-1"
+          }
+        )
+      }      
     }
     else{
       await Fees.findByIdAndUpdate(
         deletedReceipt.fees_id, 
         {
           $inc: {pending_amount: deletedTransaction.amount,
-          
         }
       })
     }
@@ -395,7 +429,6 @@ async function searchReceipt(req, res, next) {
 
     // Getting student details for student receipt
     let student_data = await Student.aggregate([
-      // { $match: { is_cancelled: 0 } },
       {
         $lookup: {
           from: "basic_infos",
@@ -514,9 +547,11 @@ async function searchReceipt(req, res, next) {
           //If above both condition fails then find particular receipt
           for(var k=0; k < item.academics[i].fees[0].fees_receipt?.length; k++){
             receipt = item.academics[i].fees[0].fees_receipt[k]
-            if (receipt.fees_receipt_id == receipt_params) {
+            if (receipt.fees_receipt_id == receipt_params && !receipt.is_deleted) {
               //keeping the found academics and removing others academics
-              item.academics.splice(i, i);
+              const academic = item.academics.splice(i, 1);
+              item.academics = academic;
+
               //emptying all receipts
               item.academics[0].fees[0].fees_receipt = []
               //Adding receipt which is matched
@@ -620,7 +655,7 @@ async function searchReceipt(req, res, next) {
       let receipts;
       if(item?.salary_receipt[0] && !isNaN(receipt_params)){
         receipts = item.salary_receipt.filter((item)=>{
-          if(item.salary_receipt_id == receipt_params){
+          if(item.salary_receipt_id == receipt_params && !item.is_deleted){
               isReceiptFound = true;
               return item;
           }

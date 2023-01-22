@@ -2,7 +2,6 @@ const fees_receipts = require("../models/feesReceipt");
 const salaryReceipt = require("../models/salaryReceipt");
 
 async function GetReport(section) {
-  // const data = await fees_receipts.find().populate("transaction_id");
   const data = await fees_receipts.aggregate([
     {
       $lookup: {
@@ -68,18 +67,15 @@ async function GetReport(section) {
     },
   ]);
 
-  // const current_Date = new Date();
-  // current_Date.setDate(current_Date.getDate());
-
   const filterPrimary = data.filter((m) => {
-    return m?.fees[0]?.academics[0]?.class[0]?.is_primary == section;
+    return m?.fees[0]?.academics[0]?.class[0]?.is_primary == section && !m.is_deleted;
   });
   filterPrimary.reverse();
   return filterPrimary;
 }
 
 async function GetSalaryReport() {
-  const SalaryData = await salaryReceipt.aggregate([
+  const data = await salaryReceipt.aggregate([
     {
       $lookup: {
         from: "admins",
@@ -115,6 +111,10 @@ async function GetSalaryReport() {
       },
     },
   ]);
+
+   const SalaryData = data.filter((m) => {
+    return !m.is_deleted;
+  });
 
   SalaryData.reverse();
   return SalaryData;
@@ -227,10 +227,8 @@ async function getYearlyReport(section) {
 
   var Years = {};
 
-  // Years = Object.assign(Years, { 2021: obj });
-
   const filterPrimary = MonthlyData.filter((m) => {
-    return m?.fees[0]?.academics[0]?.class[0]?.is_primary == section;
+    return m?.fees[0]?.academics[0]?.class[0]?.is_primary == section && !m.is_deleted;
   });
 
   const filterData = filterPrimary.map((m) => {
@@ -239,7 +237,6 @@ async function getYearlyReport(section) {
 
     if (!Years[y]) {
       Years[y] = JSON.parse(JSON.stringify(obj));
-      // Object.assign(Years[y], obj)
     }
 
     if (Years[y][mon]?.Month) {

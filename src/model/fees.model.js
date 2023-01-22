@@ -1,5 +1,4 @@
 const students = require("../models/student");
-const academics = require("../models/academic");
 
 async function getFeesAndStudentData(id) {
   path = "basic_info_id";
