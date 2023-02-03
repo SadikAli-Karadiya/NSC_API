@@ -370,7 +370,7 @@ async function deleteStudentReceipt(req, res, next) {
 
       const totalMonths = Math.round((Math.floor((utc2 - utc1) / _MS_PER_DAY))/30) + 1;
       //----------------------------------------------
-
+      
       //Subtracting totalMonths from paid_upto date
       const oldFeesDetails = await Fees.findByIdAndUpdate(deletedReceipt.fees_id)
       const oldPaidUptoDate = new Date(`${oldFeesDetails.paid_upto.split(" ")[0]}-1-${oldFeesDetails.paid_upto.split(" ")[1]}`);
