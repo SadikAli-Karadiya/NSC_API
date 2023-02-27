@@ -14,8 +14,8 @@ const Exceljs = require("Exceljs");
 exports.createNewClass = async (req, res, next) => {
   try {
     const {
-      batch_start_year,
       batch_duration,
+      batch_start_date,
       class_name,
       total_student,
       fees,
@@ -23,12 +23,12 @@ exports.createNewClass = async (req, res, next) => {
       stream,
       medium,
       is_active,
-      createdAt,
+      createdAt
     } = req.body;
 
     const classes = await Classes.create({
       class_name,
-      batch_start_year,
+      batch_start_year: new Date(batch_start_date).getFullYear(),
       batch_duration,
       total_student,
       fees,
@@ -37,6 +37,7 @@ exports.createNewClass = async (req, res, next) => {
       medium,
       is_active,
       createdAt,
+      date: batch_start_date
     });
 
     res.status(201).json({
@@ -145,7 +146,12 @@ exports.updateClass = async (req, res, next) => {
       });
     }
 
-    classes = await Classes.findByIdAndUpdate(req.params.id, req.body, {
+    classes = await Classes.findByIdAndUpdate(req.params.id, 
+      {
+        ...req.body, 
+        batch_start_year: new Date(req.body.batch_start_date).getFullYear(),
+        date: req.body.batch_start_date
+      }, {
       new: false,
       runValidators: true,
       useFindAndModify: false,
@@ -284,7 +290,8 @@ exports.transferClasses = async (req, res, next) => {
         is_primary: element.is_primary,
         stream: element.stream,
         medium: element.medium,
-        is_active: 1
+        is_active: 1,
+        date: Date.now()
       });
     });
 
