@@ -26,9 +26,28 @@ exports.createNewClass = async (req, res, next) => {
       createdAt
     } = req.body;
 
+    //getting the current year
+    let batch_year = new Date(batch_start_date).getFullYear();
+
+    let  classes_year = await Classes.aggregate([
+      { $match: { is_active: { $ne: -1 } } },
+      { $group: { _id: { batch_start_year: '$batch_start_year'} } }, { $sort: { batch_start_year: -1 } },
+    ])
+
+    if (classes_year.length > 0) {
+      classes_year = classes_year.sort((a, b) =>
+        a._id.batch_start_year < b._id.batch_start_year
+          ? 1
+          : a._id.batch_start_year > b._id.batch_start_year
+          ? -1
+          : 0
+      )
+      batch_year = classes_year[0]?._id?.batch_start_year
+    }
+
     const classes = await Classes.create({
       class_name,
-      batch_start_year: new Date(batch_start_date).getFullYear(),
+      batch_start_year: batch_year,
       batch_duration,
       total_student,
       fees,
@@ -146,10 +165,29 @@ exports.updateClass = async (req, res, next) => {
       });
     }
 
+    //getting the current year
+    let batch_year = new Date(req.body.batch_start_date).getFullYear();
+
+    let  classes_year = await Classes.aggregate([
+      { $match: { is_active: { $ne: -1 } } },
+      { $group: { _id: { batch_start_year: '$batch_start_year'} } }, { $sort: { batch_start_year: -1 } },
+    ])
+
+    if (classes_year.length > 0) {
+      classes_year = classes_year.sort((a, b) =>
+        a._id.batch_start_year < b._id.batch_start_year
+          ? 1
+          : a._id.batch_start_year > b._id.batch_start_year
+          ? -1
+          : 0
+      )
+      batch_year = classes_year[0]?._id?.batch_start_year
+    }
+
     classes = await Classes.findByIdAndUpdate(req.params.id, 
       {
         ...req.body, 
-        batch_start_year: new Date(req.body.batch_start_date).getFullYear(),
+        batch_start_year: batch_year,
         date: req.body.batch_start_date
       }, {
       new: false,

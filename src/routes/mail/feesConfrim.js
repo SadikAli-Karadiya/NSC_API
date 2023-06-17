@@ -47,7 +47,7 @@ const FeesSender = ({ email, full_name, amount, admin, studentID, net_fees, clas
             <h3> Total Fees: ${net_fees} </h3>
             <h3> Hello, ${full_name.toUpperCase()} </h3>
             <p>Thank you for your tuition fees. We're glad to have you as a student at Nasir sir classes. We hope that this will be a great experience for you.</p>
-            <p>Amount Paid <span style="font-weight: 600">Rs ${amount} </span> by ${admin}</p>
+            <p>Amount Paid <span style="font-weight: 600">Rs ${amount} </span> to ${admin}</p>
             <p>Date : ${receipDate} </p>
              <p style="font-weight:800">Thank You   </p>
               <p style="font-weight:800" >Team Nasir Sir</b></p>
