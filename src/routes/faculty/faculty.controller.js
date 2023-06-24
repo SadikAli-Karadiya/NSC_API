@@ -124,7 +124,7 @@ async function registerFaculty(req, res) {
 // --------------  GAT ALL FACULTY ------------------------
 // --------------------------------------------------------
 async function getAllFaculty(req, res) {
-  staffs.find().populate("basic_info_id").populate("contact_info_id").sort({joining_date: -1})
+  staffs.find({is_cancelled: 0}).populate("basic_info_id").populate("contact_info_id").sort({joining_date: -1})
     .then(result => {
       res.status(200).json({
         staffData: result
@@ -362,26 +362,22 @@ async function editFaculty(req, res) {
 // -------------- DELETE FACULTY   ------------------------
 // --------------------------------------------------------
 function deleteFaculty(req, res) {
-  staffs.findOneAndUpdate({
-    _id: req.params.id,
-    is_cancelled: req.body.is_cancelled
+  staffs.findByIdAndUpdate(req.params.id, {
+    is_cancelled: 1
   })
-
-
-    .then(result => {
-
-      res.status(200).json({
-        message: "Faculty Deleted",
-        result: result
-      })
+  .then(result => {
+    res.status(200).json({
+      success: true,
+      message: "Faculty Deleted Successfully",
+      result: result
     })
-
-    .catch(err => {
-      res.status(500).json({
-        error: err
-      })
+  })
+  .catch(err => {
+    console.log(err)
+    res.status(500).json({
+      error: err
     })
-
+  })
 }
 
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose')
 const {MONGODB_URL_1, MONGODB_URL_2} = require('../../../constant')
+const {updateCurrentDB} = require('../../state');
 const switchDBRouter = express.Router();
 
 switchDBRouter.get('/switch/:branch', (req, res, next)=>{
@@ -10,6 +11,7 @@ switchDBRouter.get('/switch/:branch', (req, res, next)=>{
     mongoose
       .connect(branch == 'ajitmill' ? MONGODB_URL_1 : MONGODB_URL_2)
       .then(() => {
+        updateCurrentDB(branch == 'ajitmill' ? 'nsc1' : 'nsc2')
         console.log('connected to database', branch)
         res.status(201).json({
           success: true,

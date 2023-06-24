@@ -377,6 +377,7 @@ exports.deactivateClasses = async (req, res, next) => {
 exports.displayStudentInClass = async (req, res, next) => {
   try {
     const classID = await Classes.findById(req.params.id);
+    
     const academicID = await Academic.find({ class_id: classID })
       .populate({
         path: "student_id",

@@ -113,6 +113,7 @@ async function httpSetDefault(req, res) {
 
 async function httpLoginRequest(req, res) {
   const loginData = req.body;
+
   if (!loginData.username || !loginData.password) {
     return res.status(500).json({ ok: false, error: "Please Enter Value" });
   }

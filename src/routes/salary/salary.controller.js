@@ -33,8 +33,7 @@ async function salaryFaculty(req, res) {
         
         const salaryreceipts = await salary_receipt.find()
         const fees_receipts = await FeesReceipt.find();
-        const salaryreceipt_id =
-        fees_receipts.length + salaryreceipts.length + 1 + 1000;
+        const salaryreceipt_id = salaryreceipts.length + 1 + 900000;
 
         const Salary = await transactions.create({
             is_by_cheque, 

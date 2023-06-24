@@ -8,6 +8,7 @@ const SalaryReceipt = require("../../models/salaryReceipt");
 const Transaction = require("../../models/transaction");
 const Notification = require("../../models/notification");
 const FeesSender = require('../mail/feesConfrim');
+const { getCurrentDB } = require("../../state");
 
 //-------------------------------------------------------------
 //------------------ GENERATE STUDENT RECEIPT -----------------
@@ -74,16 +75,57 @@ const generateReceiptFunction = async (
       upi_no: upi_no != "" ? upi_no : "",
       amount: net_amount,
     });
-  
-    const fees_receipts = await FeesReceipt.find();
-    const salary_receipts = await SalaryReceipt.find();
-    const fees_receipt_id = fees_receipts.length + salary_receipts.length + 1 + 1000;
     
     let fromMonth="0", toMonth="0";
     let lastPaidYear = 0;
 
-    
+    let fees_receipt_id = 0;
     if(academic_details.class_id.is_primary){
+
+      const fees_receipts = await FeesReceipt.aggregate([
+        {
+          $lookup: {
+            from: "fees",
+            localField: "fees_id",
+            foreignField: "_id",
+            as: "fees"
+          }
+        },
+        {
+          $unwind: "$fees"
+        },
+        {
+          $lookup: {
+            from: "academics",
+            localField: "fees._id",
+            foreignField: "fees_id",
+            as: "academics"
+          }
+        },
+        {
+          $unwind: "$academics"
+        },
+        {
+          $lookup: {
+            from: "classes",
+            localField: "academics.class_id",
+            foreignField: "_id",
+            as: "class"
+          }
+        },
+        {
+          $unwind: "$class"
+        },
+        {
+          $match: {
+            "class.is_primary": 1
+          }
+        }
+      ]);
+
+      const receiptSeries = getCurrentDB() == 'nsc1' ? 100000 : 300000
+      fees_receipt_id = fees_receipts.length + 1 + receiptSeries;
+
       if(last_paid == '-1'){
         lastPaidYear = new Date(date).getFullYear()
       }
@@ -133,7 +175,61 @@ const generateReceiptFunction = async (
                       :
                         `${(lastPaid + Number(total_months)) % 12}` + " " + `${lastPaidYear}`
     }
-                      
+    else{
+      const fees_receipts = await FeesReceipt.aggregate([
+        {
+          $lookup: {
+            from: "fees",
+            localField: "fees_id",
+            foreignField: "_id",
+            as: "fees"
+          }
+        },
+        {
+          $unwind: "$fees"
+        },
+        {
+          $lookup: {
+            from: "academics",
+            localField: "fees._id",
+            foreignField: "fees_id",
+            as: "academics"
+          }
+        },
+        {
+          $unwind: "$academics"
+        },
+        {
+          $lookup: {
+            from: "classes",
+            localField: "academics.class_id",
+            foreignField: "_id",
+            as: "class"
+          }
+        },
+        {
+          $unwind: "$class"
+        },
+        {
+          $match: {
+            "class.is_primary": 0
+          }
+        }
+      ]);
+
+      const receiptSeries = getCurrentDB() == 'nsc1' ? 200000 : 400000
+      fees_receipt_id = fees_receipts.length + 1 + receiptSeries;
+    }
+    
+    const isReceiptFound = await FeesReceipt.findById(fees_receipt_id)
+    
+    if(isReceiptFound){
+       return res.status(200).json({
+        success: false,
+        message: "Receipt id is clasing, call the developers to extend receipt number series",
+      });
+    }
+
     const fees_receipt_details = await FeesReceipt.create({
       fees_receipt_id,
       fees_id: academic_details.fees_id._id,
