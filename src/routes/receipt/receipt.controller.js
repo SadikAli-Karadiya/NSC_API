@@ -221,13 +221,10 @@ const generateReceiptFunction = async (
       fees_receipt_id = fees_receipts.length + 1 + receiptSeries;
     }
     
-    const isReceiptFound = await FeesReceipt.findById(fees_receipt_id)
+    const isReceiptFound = await FeesReceipt.findOne({fees_receipt_id})
     
     if(isReceiptFound){
-       return res.status(200).json({
-        success: false,
-        message: "Receipt id is clasing, call the developers to extend receipt number series",
-      });
+       return 'receipt_id_clashing'
     }
 
     const fees_receipt_details = await FeesReceipt.create({
@@ -280,6 +277,13 @@ async function generateStudentReceipt(req, res, next) {
   try {
 
     const fees_receipt_details = await generateReceiptFunction(req.body);
+
+    if ('receipt_id_clashing'){
+      return res.status(200).json({
+        success: false,
+        message: "Receipt id is clashing",
+      });
+    }
 
     if (fees_receipt_details == false) {
       return res.status(200).json({
