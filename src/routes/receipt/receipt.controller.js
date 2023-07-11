@@ -65,16 +65,6 @@ const generateReceiptFunction = async (
       })
   
     const net_amount = amount - discount;
-  
-    const transaction_details = await Transaction.create({
-      is_by_cash,
-      is_by_cheque,
-      is_by_upi,
-      cheque_no: cheque_no != "" ? cheque_no : -1,
-      cheque_date: cheque_date != "" ? cheque_date : '',
-      upi_no: upi_no != "" ? upi_no : "",
-      amount: net_amount,
-    });
     
     let fromMonth="0", toMonth="0";
     let lastPaidYear = 0;
@@ -227,6 +217,16 @@ const generateReceiptFunction = async (
        return 'receipt_id_clashing';
     }
 
+    const transaction_details = await Transaction.create({
+      is_by_cash,
+      is_by_cheque,
+      is_by_upi,
+      cheque_no: cheque_no != "" ? cheque_no : -1,
+      cheque_date: cheque_date != "" ? cheque_date : '',
+      upi_no: upi_no != "" ? upi_no : "",
+      amount: net_amount,
+    });
+    
     const fees_receipt_details = await FeesReceipt.create({
       fees_receipt_id,
       fees_id: academic_details.fees_id._id,
