@@ -224,7 +224,7 @@ const generateReceiptFunction = async (
     const isReceiptFound = await FeesReceipt.findOne({fees_receipt_id})
     
     if(isReceiptFound){
-       return 'receipt_id_clashing'
+       return 'receipt_id_clashing';
     }
 
     const fees_receipt_details = await FeesReceipt.create({
@@ -278,7 +278,7 @@ async function generateStudentReceipt(req, res, next) {
 
     const fees_receipt_details = await generateReceiptFunction(req.body);
 
-    if ('receipt_id_clashing'){
+    if (fees_receipt_details == 'receipt_id_clashing'){
       return res.status(200).json({
         success: false,
         message: "Receipt id is clashing",
