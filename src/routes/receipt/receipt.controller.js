@@ -70,51 +70,31 @@ const generateReceiptFunction = async (
     let lastPaidYear = 0;
 
     let fees_receipt_id = 0;
+
     if(academic_details.class_id.is_primary){
 
-      const fees_receipts = await FeesReceipt.aggregate([
-        {
-          $lookup: {
-            from: "fees",
-            localField: "fees_id",
-            foreignField: "_id",
-            as: "fees"
-          }
-        },
-        {
-          $unwind: "$fees"
-        },
-        {
-          $lookup: {
-            from: "academics",
-            localField: "fees._id",
-            foreignField: "fees_id",
-            as: "academics"
-          }
-        },
-        {
-          $unwind: "$academics"
-        },
-        {
-          $lookup: {
-            from: "classes",
-            localField: "academics.class_id",
-            foreignField: "_id",
-            as: "class"
-          }
-        },
-        {
-          $unwind: "$class"
-        },
-        {
-          $match: {
-            "class.is_primary": 1
-          }
-        }
-      ]);
+      let greaterThanEqual = null;
+      let lessThan = null;
 
-      const receiptSeries = getCurrentDB() == 'nsc1' ? 100000 : 300000
-      fees_receipt_id = fees_receipts.length + 1 + receiptSeries;
+      if (getCurrentDB() == 'nsc1') {
+        greaterThanEqual = 100000
+        lessThan = 200000
+      }
+      else {
+        greaterThanEqual = 300000
+        lessThan = 400000
+      }
+
+
+      const receipts = await FeesReceipt.findOne({
+        fees_receipt_id: {
+          $gte: greaterThanEqual,
+          $lt: lessThan
+        }
+      })
+      .sort({ fees_receipt_id: -1 })
+
+      fees_receipt_id = receipts.fees_receipt_id + 1
 
       if(last_paid == '-1'){
         lastPaidYear = new Date(date).getFullYear()
@@ -166,53 +146,33 @@ const generateReceiptFunction = async (
                         `${(lastPaid + Number(total_months)) % 12}` + " " + `${lastPaidYear}`
     }
     else{
-      const fees_receipts = await FeesReceipt.aggregate([
-        {
-          $lookup: {
-            from: "fees",
-            localField: "fees_id",
-            foreignField: "_id",
-            as: "fees"
-          }
-        },
-        {
-          $unwind: "$fees"
-        },
-        {
-          $lookup: {
-            from: "academics",
-            localField: "fees._id",
-            foreignField: "fees_id",
-            as: "academics"
-          }
-        },
-        {
-          $unwind: "$academics"
-        },
-        {
-          $lookup: {
-            from: "classes",
-            localField: "academics.class_id",
-            foreignField: "_id",
-            as: "class"
-          }
-        },
-        {
-          $unwind: "$class"
-        },
-        {
-          $match: {
-            "class.is_primary": 0
-          }
-        }
-      ]);
+      let greaterThanEqual = null;
+      let lessThan = null;
 
-      const receiptSeries = getCurrentDB() == 'nsc1' ? 200000 : 400000
-      fees_receipt_id = fees_receipts.length + 1 + receiptSeries;
+      if (getCurrentDB() == 'nsc1'){
+        greaterThanEqual = 200000
+        lessThan = 300000
+      }
+      else{
+        greaterThanEqual = 400000
+        lessThan = 500000
+      }
+
+  
+      const receipts = await FeesReceipt.findOne({ 
+        fees_receipt_id: { 
+          $gte: greaterThanEqual, 
+          $lt: lessThan 
+        } 
+      })
+      .sort({ fees_receipt_id : -1})
+
+      fees_receipt_id = receipts.fees_receipt_id + 1
     }
+
     
     const isReceiptFound = await FeesReceipt.findOne({fees_receipt_id})
-    
+  
     if(isReceiptFound){
        return 'receipt_id_clashing';
     }
@@ -281,7 +241,7 @@ async function generateStudentReceipt(req, res, next) {
     if (fees_receipt_details == 'receipt_id_clashing'){
       return res.status(200).json({
         success: false,
-        message: "Receipt id is clashing",
+        message: "Receipt ID is clashing",
       });
     }
 
